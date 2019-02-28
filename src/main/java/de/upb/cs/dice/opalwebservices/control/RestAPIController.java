@@ -1,6 +1,8 @@
 package de.upb.cs.dice.opalwebservices.control;
 
 import de.upb.cs.dice.opalwebservices.model.dto.DataSetLongViewDTO;
+import de.upb.cs.dice.opalwebservices.model.dto.FilterDTO;
+import de.upb.cs.dice.opalwebservices.model.dto.FilterValueDTO;
 import de.upb.cs.dice.opalwebservices.model.mapper.ModelToLongViewDTOMapper;
 import de.upb.cs.dice.opalwebservices.utility.SparQLRunner;
 import org.apache.jena.query.ParameterizedSparqlString;
@@ -14,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -38,7 +41,7 @@ public class RestAPIController {
             @RequestParam(name = "searchIn", required = false) String[] searchIn,
             @RequestParam(name = "orderBy", required = false) String orderBy, // TODO: 26.02.19 if quality metrics can be set then we need to have asc, des
             @RequestParam(name = "searchFilters", required = false) Map<String, String> filters
-            ) {
+    ) {
 
         Long num = -1L;
         try {
@@ -96,6 +99,27 @@ public class RestAPIController {
         } catch (Exception e) {
             logger.error("An error occurred in getting the results", e);
         }
+        return ret;
+    }
+
+    @GetMapping("/filters/list")
+    public List<FilterDTO> getFilters() {
+        List<FilterDTO> ret = new ArrayList<>();
+        ret.add(new FilterDTO()
+                .setTitle("Theme")
+                .setValues(Arrays.asList(
+                        new FilterValueDTO("Energy", 10),
+                        new FilterValueDTO("Environment", 143))));
+        ret.add(new FilterDTO()
+                .setTitle("publisher")
+                .setValues(Arrays.asList(
+                        new FilterValueDTO("DB", 10),
+                        new FilterValueDTO("others", 143))));
+        ret.add(new FilterDTO()
+                .setTitle("license")
+                .setValues(Arrays.asList(
+                        new FilterValueDTO("CCv4.0", 10),
+                        new FilterValueDTO("others", 143))));
         return ret;
     }
 
