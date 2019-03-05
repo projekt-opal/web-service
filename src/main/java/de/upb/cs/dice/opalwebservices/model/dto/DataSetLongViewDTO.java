@@ -5,6 +5,7 @@ import java.util.List;
 
 public class DataSetLongViewDTO implements Serializable {
     private static final long serialVersionUID = 7992064242653372582L;
+    private String uri;
     private String title;
     private String description;
     private String issueDate;
@@ -12,11 +13,13 @@ public class DataSetLongViewDTO implements Serializable {
     private List<String> keywords;
     private String fileType;
     private String overallRating;
+    private String catalog;
 
     public DataSetLongViewDTO() {
     }
 
-    public DataSetLongViewDTO(String title, String description, String issueDate, String theme, List<String> keywords, String fileType, String overallRating) {
+    public DataSetLongViewDTO(String uri, String title, String description, String issueDate, String theme, List<String> keywords, String fileType, String overallRating, String catalog) {
+        this.uri = uri;
         this.title = title;
         this.description = description;
         this.issueDate = issueDate;
@@ -24,6 +27,7 @@ public class DataSetLongViewDTO implements Serializable {
         this.keywords = keywords;
         this.fileType = fileType;
         this.overallRating = overallRating;
+        this.catalog = catalog;
     }
 
     public String getTitle() {
@@ -89,4 +93,21 @@ public class DataSetLongViewDTO implements Serializable {
         return this;
     }
 
+    public String getCatalog() {
+        return catalog;
+    }
+
+    public DataSetLongViewDTO setCatalog(String catalog) {
+        this.catalog = catalog;
+        return this;
+    }
+
+    public String getUri() {
+        return uri;
+    }
+
+    public DataSetLongViewDTO setUri(String uri) {
+        this.uri = uri;
+        return this;
+    }
 }

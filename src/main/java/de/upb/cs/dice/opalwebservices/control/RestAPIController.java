@@ -11,6 +11,7 @@ import org.apache.jena.rdf.model.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -35,6 +36,7 @@ public class RestAPIController {
         this.modelToLongViewDTOMapper = modelToLongViewDTOMapper;
     }
 
+    @CrossOrigin
     @GetMapping("/dataSets/getNumberOfDataSets")
     public Long getNumberOFDataSets(
             @RequestParam(name = "searchQuery", required = false, defaultValue = "") String searchQuery,
@@ -51,7 +53,7 @@ public class RestAPIController {
                     "?s a dcat:Dataset. " +
                     "?s ?p ?o. " +
                     "FILTER(isLiteral(?o)). " +
-                    "FILTER CONTAINS (?o,\"" + searchQuery + "\"). " +
+                    "FILTER CONTAINS (STR(?o),\"" + searchQuery + "\"). " +
                     "}";
 
             pss.setCommandText(query);
@@ -63,7 +65,7 @@ public class RestAPIController {
         }
         return num;
     }
-
+    @CrossOrigin
     @GetMapping("/dataSets/getSubList")
     public List<DataSetLongViewDTO> getSubListOFDataSets(
             @RequestParam(name = "searchQuery", required = false, defaultValue = "") String searchQuery,
@@ -88,11 +90,12 @@ public class RestAPIController {
             pss.setCommandText(query);
             pss.setNsPrefix("dcat", "http://www.w3.org/ns/dcat#");
 
-            List<Resource> dataSets = sparQLRunner.execSelect(pss.asQuery());
+            List<Resource> dataSets = sparQLRunner.execSelect(pss.asQuery(), "s");
 
             dataSets.forEach(dataSet -> {
                 Model model = getGraphOfDataSet(dataSet);
-                DataSetLongViewDTO dataSetLongViewDTO = modelToLongViewDTOMapper.toDataSetLongViewDTO(model);
+                Resource catalog = getCatalog(dataSet);
+                DataSetLongViewDTO dataSetLongViewDTO = modelToLongViewDTOMapper.toDataSetLongViewDTO(model, catalog);
                 ret.add(dataSetLongViewDTO);
             });
 
@@ -102,6 +105,7 @@ public class RestAPIController {
         return ret;
     }
 
+    @CrossOrigin
     @GetMapping("/filters/list")
     public List<FilterDTO> getFilters() {
         List<FilterDTO> ret = new ArrayList<>();
@@ -128,13 +132,13 @@ public class RestAPIController {
 
 
         ParameterizedSparqlString pss = new ParameterizedSparqlString("" +
-                "CONSTRUCT { " + "?dataSet ?predicate ?object .\n" +
-                "\t?object ?p2 ?o2}\n" +
-                "WHERE { \n" +
-                "  GRAPH ?g {\n" +
-                "    ?dataSet ?predicate ?object.\n" +
-                "    OPTIONAL { ?object ?p2 ?o2 }\n" +
-                "  }\n" +
+                "CONSTRUCT { " + "?dataSet ?predicate ?object . " +
+                "\t?object ?p2 ?o2} " +
+                "WHERE { " +
+                "  GRAPH ?g { " +
+                "    ?dataSet ?predicate ?object. " +
+                "    OPTIONAL { ?object ?p2 ?o2 } " +
+                "  }" +
                 "}");
 
         pss.setParam("dataSet", dataSet);
@@ -142,6 +146,32 @@ public class RestAPIController {
         model = sparQLRunner.executeConstruct(pss.asQuery());
 
         return model;
+    }
+
+    private Resource getCatalog(Resource dataSet) {
+        ParameterizedSparqlString pss = new ParameterizedSparqlString("" +
+                "SELECT ?catalog " +
+                "WHERE { " +
+                "  GRAPH ?g { " +
+                "    ?catalog dcat:dataset ?dataSet" +
+                "  }" +
+                "}");
+
+        pss.setParam("dataSet", dataSet);
+        pss.setNsPrefix("dcat", "http://www.w3.org/ns/dcat#");
+
+        List<Resource> resources;
+        try {
+            resources = sparQLRunner.execSelect(pss.asQuery(), "catalog");
+        } catch (Exception e) {
+            logger.error("An error occurred in getting the catalog", dataSet, e);
+            return null;
+        }
+        if(resources.size() != 1) {
+            logger.error("catalog size is not 1, ", dataSet);
+            return null;
+        }
+        return resources.get(0);
     }
 
 }

@@ -1,11 +1,10 @@
 package de.upb.cs.dice.opalwebservices.model.mapper;
 
 import de.upb.cs.dice.opalwebservices.model.dto.DataSetLongViewDTO;
-import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.NodeIterator;
-import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.rdf.model.*;
 import org.apache.jena.vocabulary.DCAT;
 import org.apache.jena.vocabulary.DCTerms;
+import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
 import org.mapstruct.Mapper;
 import org.slf4j.Logger;
@@ -18,8 +17,9 @@ import java.util.List;
 public abstract class ModelToLongViewDTOMapper {
     private static final Logger logger = LoggerFactory.getLogger(ModelToLongViewDTOMapper.class);
 
-    public DataSetLongViewDTO toDataSetLongViewDTO(Model model) {
+    public DataSetLongViewDTO toDataSetLongViewDTO(Model model, Resource catalog) {
         try {
+            String uri = getUri(model);
             String title = getTitle(model);
             String description = getDescription(model);
             String theme = getTheme(model);
@@ -28,17 +28,25 @@ public abstract class ModelToLongViewDTOMapper {
             String overAllRating = "3";
             List<String> keywords = Arrays.asList("key1", "key2");
             DataSetLongViewDTO dataSetLongViewDTO = new DataSetLongViewDTO()
+                    .setUri(uri == null ? title : uri)
                     .setTitle(title)
                     .setDescription(description)
                     .setTheme(theme)
                     .setIssueDate(issueDate)
                     .setKeywords(keywords)
                     .setFileType(fileType)
-                    .setOverallRating(overAllRating);
+                    .setOverallRating(overAllRating)
+                    .setCatalog(catalog.getURI());
             return dataSetLongViewDTO;
         } catch (Exception e) {
             logger.error("Error in ModelToLongViewDTOMapper ", e);
         }
+        return null;
+    }
+
+    private String getUri(Model model) {
+        ResIterator resIterator = model.listResourcesWithProperty(RDF.type, DCAT.Dataset);
+        if(resIterator.hasNext()) return resIterator.nextResource().getURI();
         return null;
     }
 

@@ -58,14 +58,14 @@ public class SparQLRunner implements CredentialsProvider {
     }
 
 
-    public List<Resource> execSelect(Query query) throws Exception {
+    public List<Resource> execSelect(Query query, String resourceVariable) throws Exception {
         try (QueryExecution queryExecution = qef.createQueryExecution(query)) {
             ResultSet resultSet = queryExecution.execSelect();
             if (resultSet != null) {
                 List<Resource> ret = new ArrayList<>();
                 while (resultSet.hasNext()) {
                     QuerySolution querySolution = resultSet.nextSolution();
-                    Resource s = querySolution.getResource("s");
+                    Resource s = querySolution.getResource(resourceVariable);
                     ret.add(s);
                 }
                 return ret;
