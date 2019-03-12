@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 
 @Mapper(componentModel = "spring")
 public abstract class ModelToLongViewDTOMapper {
@@ -25,7 +26,8 @@ public abstract class ModelToLongViewDTOMapper {
             String theme = getTheme(model);
             String fileType = "PDF";
             String issueDate = "2018-12-05";
-            String overAllRating = "3";
+            Random r = new Random();
+            String overAllRating = Double.toString(r.nextDouble() * 4 + 1);
             List<String> keywords = Arrays.asList("key1", "key2");
             DataSetLongViewDTO dataSetLongViewDTO = new DataSetLongViewDTO()
                     .setUri(uri == null ? title : uri)
@@ -46,7 +48,7 @@ public abstract class ModelToLongViewDTOMapper {
 
     private String getUri(Model model) {
         ResIterator resIterator = model.listResourcesWithProperty(RDF.type, DCAT.Dataset);
-        if(resIterator.hasNext()) return resIterator.nextResource().getURI();
+        if (resIterator.hasNext()) return resIterator.nextResource().getURI();
         return null;
     }
 

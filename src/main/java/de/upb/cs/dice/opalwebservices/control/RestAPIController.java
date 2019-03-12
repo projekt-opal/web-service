@@ -3,6 +3,7 @@ package de.upb.cs.dice.opalwebservices.control;
 import de.upb.cs.dice.opalwebservices.model.dto.DataSetLongViewDTO;
 import de.upb.cs.dice.opalwebservices.model.dto.FilterDTO;
 import de.upb.cs.dice.opalwebservices.model.dto.FilterValueDTO;
+import de.upb.cs.dice.opalwebservices.model.dto.ReceivingFilterDTO;
 import de.upb.cs.dice.opalwebservices.model.mapper.ModelToLongViewDTOMapper;
 import de.upb.cs.dice.opalwebservices.utility.SparQLRunner;
 import org.apache.jena.query.ParameterizedSparqlString;
@@ -11,15 +12,11 @@ import org.apache.jena.rdf.model.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 public class RestAPIController {
@@ -37,24 +34,23 @@ public class RestAPIController {
     }
 
     @CrossOrigin
-    @GetMapping("/dataSets/getNumberOfDataSets")
+    @PostMapping("/dataSets/getNumberOfDataSets")
     public Long getNumberOFDataSets(
             @RequestParam(name = "searchQuery", required = false, defaultValue = "") String searchQuery,
             @RequestParam(name = "searchIn", required = false) String[] searchIn,
             @RequestParam(name = "orderBy", required = false) String orderBy, // TODO: 26.02.19 if quality metrics can be set then we need to have asc, des
-            @RequestParam(name = "searchFilters", required = false) Map<String, String> filters
+            @RequestBody(required = false) ReceivingFilterDTO[] filters
     ) {
 
         Long num = -1L;
         try {
             ParameterizedSparqlString pss = new ParameterizedSparqlString();
 
-            String query = "SELECT (COUNT(DISTINCT ?s) AS ?num) WHERE { " +
-                    "?s a dcat:Dataset. " +
-                    "?s ?p ?o. " +
-                    "FILTER(isLiteral(?o)). " +
-                    "FILTER CONTAINS (STR(?o),\"" + searchQuery + "\"). " +
-                    "}";
+            String filtersString = getFiltersString(searchQuery, filters);
+
+            String query = "SELECT (COUNT(DISTINCT ?s) AS ?num) WHERE {  GRAPH ?g { " +
+                    "?s a dcat:Dataset. " + filtersString +
+                    "} }";
 
             pss.setCommandText(query);
             pss.setNsPrefix("dcat", "http://www.w3.org/ns/dcat#");
@@ -65,26 +61,25 @@ public class RestAPIController {
         }
         return num;
     }
+
     @CrossOrigin
-    @GetMapping("/dataSets/getSubList")
+    @PostMapping("/dataSets/getSubList")
     public List<DataSetLongViewDTO> getSubListOFDataSets(
             @RequestParam(name = "searchQuery", required = false, defaultValue = "") String searchQuery,
             @RequestParam(name = "searchIn", required = false) String[] searchIn,
             @RequestParam(name = "orderBy", required = false) String orderBy, // TODO: 26.02.19 if quality metrics can be set then we need to have asc, des
-            @RequestParam(name = "searchFilters", required = false) Map<String, String> filters,
             @RequestParam(name = "low", required = false, defaultValue = "0") Long low,
-            @RequestParam(name = "limit", required = false, defaultValue = "100") Long limit
-
+            @RequestParam(name = "limit", required = false, defaultValue = "10") Long limit,
+            @RequestBody(required = false) ReceivingFilterDTO[] filters
     ) {
         List<DataSetLongViewDTO> ret = new ArrayList<>();
         try {
             ParameterizedSparqlString pss = new ParameterizedSparqlString();
 
+            String filtersString = getFiltersString(searchQuery, filters);
+
             String query = "SELECT DISTINCT ?s WHERE { GRAPH ?g { " +
-                    "?s a dcat:Dataset. " +
-                    "?s ?p ?o. " +
-                    "FILTER(isLiteral(?o)). " +
-                    "FILTER CONTAINS (STR(?o),\"" + searchQuery + "\"). " +
+                    "?s a dcat:Dataset. " + filtersString +
                     "} } OFFSET " + low + " LIMIT " + limit;
 
             pss.setCommandText(query);
@@ -105,25 +100,59 @@ public class RestAPIController {
         return ret;
     }
 
+    private String getFiltersString(String searchQuery, ReceivingFilterDTO[] filters) {
+        String filtersString = "";
+        if (searchQuery.length() > 0)
+            filtersString +=
+                    "?s ?p ?o. +\n" +
+                            "FILTER(isLiteral(?o)).  +\n" +
+                            "FILTER CONTAINS (STR(?o),\" + searchQuery + \").";
+        if ((filters != null && filters.length > 0)) {
+            for (ReceivingFilterDTO entry : filters) {
+                String key = entry.getProperty();
+                String[] values = entry.getValues();
+                if (values.length == 1) {
+                    if (values[0].startsWith("http://"))
+                        filtersString += " ?s <" + key + "> <" + values[0] + "> .";
+                    else
+                        filtersString += " ?s <" + key + "> \"" + values[0] + "\" .";
+                } else if (values.length > 1) {
+                    filtersString += "VALUES (?value) {  ";
+                    for (String val : values)
+                        if (val.startsWith("http://"))
+                            filtersString += " ( <" + val + "> )";
+                        else
+                            filtersString += " ( \"" + val + "\" )";
+                    filtersString += "} ?s <" + key + "> ?value.";
+                }
+            }
+        }
+        return filtersString;
+    }
+
     @CrossOrigin
     @GetMapping("/filters/list")
     public List<FilterDTO> getFilters() {
         List<FilterDTO> ret = new ArrayList<>();
         ret.add(new FilterDTO()
+                .setUri("http://www.w3.org/ns/dcat#theme")
                 .setTitle("Theme")
                 .setValues(Arrays.asList(
-                        new FilterValueDTO("Energy", 10),
-                        new FilterValueDTO("Environment", 143))));
+                        new FilterValueDTO("Energy", "Energy", 10),
+                        new FilterValueDTO("Environment", "Environment", 143),
+                        new FilterValueDTO("http://projeckt-opal.de/theme/mcloud/climateAndWeather", "climate and weather", 143))));
         ret.add(new FilterDTO()
+                .setUri("http://www.w3.org/ns/dcat#publisher")
                 .setTitle("publisher")
                 .setValues(Arrays.asList(
-                        new FilterValueDTO("DB", 10),
-                        new FilterValueDTO("others", 143))));
+                        new FilterValueDTO("DB", "DB", 10),
+                        new FilterValueDTO("others", "others", 143))));
         ret.add(new FilterDTO()
+                .setUri("http://purl.org/dc/terms/license")
                 .setTitle("license")
                 .setValues(Arrays.asList(
-                        new FilterValueDTO("CCv4.0", 10),
-                        new FilterValueDTO("others", 143))));
+                        new FilterValueDTO("CCv4.0", "CCv4.0", 50),
+                        new FilterValueDTO("others", "others", 93))));
         return ret;
     }
 
@@ -167,7 +196,7 @@ public class RestAPIController {
             logger.error("An error occurred in getting the catalog", dataSet, e);
             return null;
         }
-        if(resources.size() != 1) {
+        if (resources.size() != 1) {
             logger.error("catalog size is not 1, ", dataSet);
             return null;
         }
