@@ -1,6 +1,6 @@
-package de.upb.cs.dice.opalwebservices.model.mapper;
+package org.diceresearch.opalwebservices.model.mapper;
 
-import de.upb.cs.dice.opalwebservices.model.dto.DataSetLongViewDTO;
+import org.diceresearch.opalwebservices.model.dto.DataSetLongViewDTO;
 import org.apache.jena.rdf.model.*;
 import org.apache.jena.vocabulary.DCAT;
 import org.apache.jena.vocabulary.DCTerms;

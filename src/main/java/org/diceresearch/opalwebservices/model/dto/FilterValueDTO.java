@@ -1,4 +1,4 @@
-package de.upb.cs.dice.opalwebservices.model.dto;
+package org.diceresearch.opalwebservices.model.dto;
 
 import java.io.Serializable;
 

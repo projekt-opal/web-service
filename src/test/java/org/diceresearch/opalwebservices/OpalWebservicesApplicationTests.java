@@ -1,4 +1,4 @@
-package de.upb.cs.dice.opalwebservices;
+package org.diceresearch.opalwebservices;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
