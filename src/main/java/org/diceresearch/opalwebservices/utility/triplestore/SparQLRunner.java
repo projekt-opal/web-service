@@ -1,4 +1,4 @@
-package de.upb.cs.dice.opalwebservices.utility;
+package org.diceresearch.opalwebservices.utility.triplestore;
 
 import org.aksw.jena_sparql_api.http.QueryExecutionFactoryHttp;
 import org.aksw.jena_sparql_api.retry.core.QueryExecutionFactoryRetry;
@@ -15,8 +15,10 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,18 +31,26 @@ public class SparQLRunner implements CredentialsProvider {
     private org.apache.http.auth.Credentials credentials;
     private org.aksw.jena_sparql_api.core.QueryExecutionFactory qef;
 
-    public SparQLRunner() {
-        initialQueryExecutionFactory();
-    }
+    @Value(value = "${info.opal.tripleStore.url}")
+    private String url;
+    @Value(value = "${info.opal.tripleStore.username}")
+    private String username;
+    @Value(value = "${info.opal.tripleStore.password}")
+    private String password;
 
-    private void initialQueryExecutionFactory() {
-        credentials = new UsernamePasswordCredentials("dba", "dba");
+//    public SparQLRunner() {
+//        initialQueryExecutionFactory();
+//    }
+
+    @PostConstruct
+    public void initialQueryExecutionFactory() {
+        credentials = new UsernamePasswordCredentials(username, password);
 
         HttpClientBuilder clientBuilder = HttpClientBuilder.create();
         clientBuilder.setDefaultCredentialsProvider(this);
         org.apache.http.impl.client.CloseableHttpClient client = clientBuilder.build();
 
-        qef = new QueryExecutionFactoryHttp("http://localhost:8890/sparql",
+        qef = new QueryExecutionFactoryHttp(url,
                 new org.apache.jena.sparql.core.DatasetDescription(), client);
         qef = new QueryExecutionFactoryRetry(qef, 5, 1000);
     }

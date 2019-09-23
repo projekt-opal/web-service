@@ -1,4 +1,4 @@
-package de.upb.cs.dice.opalwebservices;
+package org.diceresearch.opalwebservices;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

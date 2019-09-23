@@ -1,47 +1,42 @@
-package de.upb.cs.dice.opalwebservices.control;
+package org.diceresearch.opalwebservices.utility.triplestore;
 
-import de.upb.cs.dice.opalwebservices.model.dto.DataSetLongViewDTO;
-import de.upb.cs.dice.opalwebservices.model.dto.FilterDTO;
-import de.upb.cs.dice.opalwebservices.model.dto.FilterValueDTO;
-import de.upb.cs.dice.opalwebservices.model.dto.ReceivingFilterDTO;
-import de.upb.cs.dice.opalwebservices.model.mapper.ModelToLongViewDTOMapper;
-import de.upb.cs.dice.opalwebservices.utility.SparQLRunner;
 import org.apache.jena.query.ParameterizedSparqlString;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
+import org.diceresearch.opalwebservices.model.dto.DataSetLongViewDTO;
+import org.diceresearch.opalwebservices.model.dto.FilterDTO;
+import org.diceresearch.opalwebservices.model.dto.FilterValueDTO;
+import org.diceresearch.opalwebservices.model.dto.ReceivingFilterDTO;
+import org.diceresearch.opalwebservices.model.mapper.ModelToLongViewDTOMapper;
+import org.diceresearch.opalwebservices.utility.DataProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-@RestController
-public class RestAPIController {
+@Profile(value = {"triplestore","default"})
+@Component
+public class TripleStoreProvider implements DataProvider {
 
-    private static final Logger logger = LoggerFactory.getLogger(RestAPIController.class);
+    private static final Logger logger = LoggerFactory.getLogger(TripleStoreProvider.class);
 
     private final SparQLRunner sparQLRunner;
     private final ModelToLongViewDTOMapper modelToLongViewDTOMapper;
 
 
     @Autowired
-    public RestAPIController(SparQLRunner sparQLRunner, ModelToLongViewDTOMapper modelToLongViewDTOMapper) {
+    public TripleStoreProvider(SparQLRunner sparQLRunner, ModelToLongViewDTOMapper modelToLongViewDTOMapper) {
         this.sparQLRunner = sparQLRunner;
         this.modelToLongViewDTOMapper = modelToLongViewDTOMapper;
     }
 
-    @CrossOrigin
-    @PostMapping("/dataSets/getNumberOfDataSets")
-    public Long getNumberOFDataSets(
-            @RequestParam(name = "searchQuery", required = false, defaultValue = "") String searchQuery,
-            @RequestParam(name = "searchIn", required = false) String[] searchIn,
-            @RequestParam(name = "orderBy", required = false) String orderBy, // TODO: 26.02.19 if quality metrics can be set then we need to have asc, des
-            @RequestBody(required = false) ReceivingFilterDTO[] filters
-    ) {
-
+    @Override
+    public long getNumberOfDatasets(String searchQuery, String[] searchIn, String orderBy, ReceivingFilterDTO[] filters) {
         Long num = -1L;
         try {
             ParameterizedSparqlString pss = new ParameterizedSparqlString();
@@ -62,16 +57,8 @@ public class RestAPIController {
         return num;
     }
 
-    @CrossOrigin
-    @PostMapping("/dataSets/getSubList")
-    public List<DataSetLongViewDTO> getSubListOFDataSets(
-            @RequestParam(name = "searchQuery", required = false, defaultValue = "") String searchQuery,
-            @RequestParam(name = "searchIn", required = false) String[] searchIn,
-            @RequestParam(name = "orderBy", required = false) String orderBy, // TODO: 26.02.19 if quality metrics can be set then we need to have asc, des
-            @RequestParam(name = "low", required = false, defaultValue = "0") Long low,
-            @RequestParam(name = "limit", required = false, defaultValue = "10") Long limit,
-            @RequestBody(required = false) ReceivingFilterDTO[] filters
-    ) {
+    @Override
+    public List<DataSetLongViewDTO> getSubListOFDataSets(String searchQuery, Long low, Long limit, String[] searchIn, String orderBy, ReceivingFilterDTO[] filters) {
         List<DataSetLongViewDTO> ret = new ArrayList<>();
         try {
             ParameterizedSparqlString pss = new ParameterizedSparqlString();
@@ -100,38 +87,7 @@ public class RestAPIController {
         return ret;
     }
 
-    private String getFiltersString(String searchQuery, ReceivingFilterDTO[] filters) {
-        String filtersString = "";
-        if (searchQuery.length() > 0)
-            filtersString +=
-                    "?s ?p ?o. +\n" +
-                            "FILTER(isLiteral(?o)).  +\n" +
-                            "FILTER CONTAINS (STR(?o),\" + searchQuery + \").";
-        if ((filters != null && filters.length > 0)) {
-            for (ReceivingFilterDTO entry : filters) {
-                String key = entry.getProperty();
-                String[] values = entry.getValues();
-                if (values.length == 1) {
-                    if (values[0].startsWith("http://"))
-                        filtersString += " ?s <" + key + "> <" + values[0] + "> .";
-                    else
-                        filtersString += " ?s <" + key + "> \"" + values[0] + "\" .";
-                } else if (values.length > 1) {
-                    filtersString += "VALUES (?value) {  ";
-                    for (String val : values)
-                        if (val.startsWith("http://"))
-                            filtersString += " ( <" + val + "> )";
-                        else
-                            filtersString += " ( \"" + val + "\" )";
-                    filtersString += "} ?s <" + key + "> ?value.";
-                }
-            }
-        }
-        return filtersString;
-    }
-
-    @CrossOrigin
-    @GetMapping("/filters/list")
+    @Override
     public List<FilterDTO> getFilters() {
         List<FilterDTO> ret = new ArrayList<>();
         ret.add(new FilterDTO()
@@ -156,13 +112,38 @@ public class RestAPIController {
         return ret;
     }
 
+    private String getFiltersString(String searchQuery, ReceivingFilterDTO[] filters) {
+        StringBuilder filtersString = new StringBuilder();
+        if (searchQuery.length() > 0)
+            filtersString.append("?s ?p ?o. +\n" + "FILTER(isLiteral(?o)).  +\n" + "FILTER CONTAINS (STR(?o),\" + searchQuery + \").");
+        if ((filters != null && filters.length > 0)) {
+            for (ReceivingFilterDTO entry : filters) {
+                String key = entry.getProperty();
+                String[] values = entry.getValues();
+                if (values.length == 1) {
+                    if (values[0].startsWith("http://"))
+                        filtersString.append(" ?s <").append(key).append("> <").append(values[0]).append("> .");
+                    else
+                        filtersString.append(" ?s <").append(key).append("> \"").append(values[0]).append("\" .");
+                } else if (values.length > 1) {
+                    filtersString.append("VALUES (?value) {  ");
+                    for (String val : values)
+                        if (val.startsWith("http://"))
+                            filtersString.append(" ( <").append(val).append("> )");
+                        else
+                            filtersString.append(" ( \"").append(val).append("\" )");
+                    filtersString.append("} ?s <").append(key).append("> ?value.");
+                }
+            }
+        }
+        return filtersString.toString();
+    }
+
     private Model getGraphOfDataSet(Resource dataSet) {
         Model model;
-
-
         ParameterizedSparqlString pss = new ParameterizedSparqlString("" +
-                "CONSTRUCT { " + "?dataSet ?predicate ?object . " +
-                "\t?object ?p2 ?o2} " +
+                "CONSTRUCT { " + "?dataSet ?predicate ?object. " +
+                "?object ?p2 ?o2} " +
                 "WHERE { " +
                 "  GRAPH ?g { " +
                 "    ?dataSet ?predicate ?object. " +
@@ -193,14 +174,13 @@ public class RestAPIController {
         try {
             resources = sparQLRunner.execSelect(pss.asQuery(), "catalog");
         } catch (Exception e) {
-            logger.error("An error occurred in getting the catalog", dataSet, e);
+            logger.error("An error occurred in getting the catalog {} {}", dataSet, e);
             return null;
         }
         if (resources.size() != 1) {
-            logger.error("catalog size is not 1, ", dataSet);
+            logger.error("catalog size is not 1, {}", dataSet);
             return null;
         }
         return resources.get(0);
     }
-
 }
