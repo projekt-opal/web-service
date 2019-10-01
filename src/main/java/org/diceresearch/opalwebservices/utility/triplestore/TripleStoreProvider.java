@@ -94,21 +94,21 @@ public class TripleStoreProvider implements DataProvider {
                 .setUri("http://www.w3.org/ns/dcat#theme")
                 .setTitle("Theme")
                 .setValues(Arrays.asList(
-                        new FilterValueDTO("Energy", "Energy", 10),
-                        new FilterValueDTO("Environment", "Environment", 143),
-                        new FilterValueDTO("http://projeckt-opal.de/theme/mcloud/climateAndWeather", "climate and weather", 143))));
+                        new FilterValueDTO("Energy", "Energy", "label", 10),
+                        new FilterValueDTO("Environment", "Environment", "label", 143),
+                        new FilterValueDTO("http://projeckt-opal.de/theme/mcloud/climateAndWeather", "climate and weather", "label", 143))));
         ret.add(new FilterDTO()
                 .setUri("http://www.w3.org/ns/dcat#publisher")
                 .setTitle("publisher")
                 .setValues(Arrays.asList(
-                        new FilterValueDTO("DB", "DB", 10),
-                        new FilterValueDTO("others", "others", 143))));
+                        new FilterValueDTO("DB", "DB", "label", 10),
+                        new FilterValueDTO("others", "others", "label", 143))));
         ret.add(new FilterDTO()
                 .setUri("http://purl.org/dc/terms/license")
                 .setTitle("license")
                 .setValues(Arrays.asList(
-                        new FilterValueDTO("CCv4.0", "CCv4.0", 50),
-                        new FilterValueDTO("others", "others", 93))));
+                        new FilterValueDTO("CCv4.0", "CCv4.0", "label", 50),
+                        new FilterValueDTO("others", "others", "label", 93))));
         return ret;
     }
 
