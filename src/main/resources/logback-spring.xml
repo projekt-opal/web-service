@@ -7,7 +7,7 @@
               class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>/var/log/converter/webservices.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>webservices.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <fileNamePattern>/var/log/converter/webservices.%d{yyyy-MM-dd}.log</fileNamePattern>
             <maxHistory>30</maxHistory>
             <totalSizeCap>1GB</totalSizeCap>
         </rollingPolicy>
