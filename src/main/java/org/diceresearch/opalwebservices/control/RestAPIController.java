@@ -1,9 +1,6 @@
 package org.diceresearch.opalwebservices.control;
 
-import org.diceresearch.opalwebservices.model.dto.DataSetLongViewDTO;
-import org.diceresearch.opalwebservices.model.dto.FilterDTO;
-import org.diceresearch.opalwebservices.model.dto.FilterValueDTO;
-import org.diceresearch.opalwebservices.model.dto.ReceivingFilterDTO;
+import org.diceresearch.opalwebservices.model.dto.*;
 import org.diceresearch.opalwebservices.utility.DataProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,54 +48,39 @@ public class RestAPIController {
     }
 
     @CrossOrigin
+    @GetMapping("/dataSet")
+    public DataSetDTO getDataSet(@RequestParam(name = "uri", required = false) String uri) {
+        return provider.getDataSet(uri);
+    }
+
+    @CrossOrigin
     @GetMapping("/filters/list")
-    public List<FilterDTO> getFilters() {
-        return provider.getFilters();
+    public List<FilterDTO> getFilters(
+            @RequestParam(name = "searchQuery", required = false, defaultValue = "") String searchQuery,
+            @RequestParam(name = "searchIn", required = false) String[] searchIn) {
+        return provider.getFilters(searchQuery, searchIn);
     }
-
-    @CrossOrigin
-    @GetMapping("/titles")
-    public List<String> getTitles() {
-        return Arrays.asList("Title 1", "Title 2");
-    }
-
-    @CrossOrigin
-    @RequestMapping(value = "/values", method = {RequestMethod.GET, RequestMethod.POST})
-    public List<FilterValueDTO> getValues(@RequestParam(name = "title", required = false) String title) {
-        logger.info("getValues.title: " + title);
-        switch (title) {
-            case "Title 1":
-                return Arrays.asList(new FilterValueDTO("uri1", "value1", "label1", 20));
-            case "Title 2":
-                return Arrays.asList(
-                        new FilterValueDTO("uri10", "value10", "label10", 20),
-                        new FilterValueDTO("uri2", "value2", "label2", 40),
-                        new FilterValueDTO("uri3", "value3", "label3", 20)
-                        );
-        }
-        return null;
-    }
-
 
     // TODO: 10/1/19 An DTO for the RequestBody is needed
     @CrossOrigin
-    @PostMapping("/count")
-    public String getCount(
-            @RequestBody(required = false) String header,
-            @RequestBody(required = false) String uri,
-            @RequestBody(required = false) String searchKey,
-            @RequestBody(required = false) String searchIn
-                                  ) {
-        logger.info("getCount.header: " + header);
-        logger.info("getCount.uri: " + uri);
-        logger.info("getCount.searchKey: " + searchKey);
-        logger.info("getCount.searchIn: " + searchIn);
-        return "10";
+    @GetMapping("/filter/count")
+    public Long getCount(
+            @RequestParam(required = false) String filterUri,
+            @RequestParam(required = false) String valueUri,
+            @RequestParam(required = false) String searchKey,
+            @RequestParam(required = false) String searchIn
+    ) {
+        return provider.getCountOfFilterValue(filterUri, valueUri, searchKey, searchIn);
     }
 
     @CrossOrigin
     @GetMapping("/filteredOptions")
     public List<FilterValueDTO> getFilter(@RequestParam(name = "name", required = false) String name) {
+        try {
+            Thread.sleep(1500);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         List<FilterValueDTO> filterValueDTOS = Arrays.asList(
                 new FilterValueDTO("uri1", "value1", "qwertyy", 20),
                 new FilterValueDTO("uri2", "value2", "asdfg", 40),

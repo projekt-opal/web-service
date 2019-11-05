@@ -1,10 +1,8 @@
 package org.diceresearch.opalwebservices.model.dto;
 
-import java.io.Serializable;
 import java.util.List;
 
-public class DataSetLongViewDTO implements Serializable {
-    private static final long serialVersionUID = 7992064242653372582L;
+public class DataSetLongViewDTO {
     private String uri;
     private String title;
     private String description;
@@ -14,11 +12,14 @@ public class DataSetLongViewDTO implements Serializable {
     private String fileType;
     private String overallRating;
     private String catalog;
+    private PublisherDTO publisherDTO;
+
 
     public DataSetLongViewDTO() {
     }
 
-    public DataSetLongViewDTO(String uri, String title, String description, String issueDate, String theme, List<String> keywords, String fileType, String overallRating, String catalog) {
+    public DataSetLongViewDTO(String uri, String title, String description, String issueDate, String theme,
+                              List<String> keywords, String fileType, String overallRating, String catalog, PublisherDTO publisherDTO) {
         this.uri = uri;
         this.title = title;
         this.description = description;
@@ -28,6 +29,7 @@ public class DataSetLongViewDTO implements Serializable {
         this.fileType = fileType;
         this.overallRating = overallRating;
         this.catalog = catalog;
+        this.publisherDTO = publisherDTO;
     }
 
     public String getTitle() {
@@ -108,6 +110,15 @@ public class DataSetLongViewDTO implements Serializable {
 
     public DataSetLongViewDTO setUri(String uri) {
         this.uri = uri;
+        return this;
+    }
+
+    public PublisherDTO getPublisherDTO() {
+        return publisherDTO;
+    }
+
+    public DataSetLongViewDTO setPublisherDTO(PublisherDTO publisherDTO) {
+        this.publisherDTO = publisherDTO;
         return this;
     }
 }

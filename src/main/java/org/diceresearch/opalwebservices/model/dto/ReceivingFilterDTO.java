@@ -1,35 +1,44 @@
 package org.diceresearch.opalwebservices.model.dto;
 
-import java.io.Serializable;
+import java.util.List;
 
-public class ReceivingFilterDTO implements Serializable {
-    private static final long serialVersionUID = 3831420667948753173L;
-
-    private String property;
-    private String[] values;
+public class ReceivingFilterDTO {
+    private String title;
+    private String uri;
+    private List<FilterValueDTO> values;
 
     public ReceivingFilterDTO() {
     }
 
-    public ReceivingFilterDTO(String property, String[] values) {
-        this.property = property;
+    public ReceivingFilterDTO(String title, String uri, List<FilterValueDTO> values) {
+        this.title = title;
+        this.uri = uri;
         this.values = values;
     }
 
-    public String getProperty() {
-        return property;
+    public String getTitle() {
+        return title;
     }
 
-    public ReceivingFilterDTO setProperty(String property) {
-        this.property = property;
+    public ReceivingFilterDTO setTitle(String title) {
+        this.title = title;
         return this;
     }
 
-    public String[] getValues() {
+    public String getUri() {
+        return uri;
+    }
+
+    public ReceivingFilterDTO setUri(String uri) {
+        this.uri = uri;
+        return this;
+    }
+
+    public List<FilterValueDTO> getValues() {
         return values;
     }
 
-    public ReceivingFilterDTO setValues(String[] values) {
+    public ReceivingFilterDTO setValues(List<FilterValueDTO> values) {
         this.values = values;
         return this;
     }

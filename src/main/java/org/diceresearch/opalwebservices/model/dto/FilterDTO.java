@@ -1,10 +1,9 @@
 package org.diceresearch.opalwebservices.model.dto;
 
-import java.io.Serializable;
 import java.util.List;
 
-public class FilterDTO implements Serializable {
-    private static final long serialVersionUID = -7109984421794445640L;
+public class FilterDTO {
+
     private String uri;
     private String title;
     private List<FilterValueDTO> values;

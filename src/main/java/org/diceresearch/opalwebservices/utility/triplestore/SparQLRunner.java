@@ -1,5 +1,6 @@
 package org.diceresearch.opalwebservices.utility.triplestore;
 
+import org.aksw.commons.util.Pair;
 import org.aksw.jena_sparql_api.http.QueryExecutionFactoryHttp;
 import org.aksw.jena_sparql_api.retry.core.QueryExecutionFactoryRetry;
 import org.apache.http.auth.AuthScope;
@@ -83,6 +84,23 @@ public class SparQLRunner implements CredentialsProvider {
             else throw new Exception("No results received from TripleStore");
         }
     }
+
+    public List<Pair<Resource, Integer>> execSelectReturnPair(Query query, String resourceVariable, String num) throws Exception {
+            try (QueryExecution queryExecution = qef.createQueryExecution(query)) {
+                ResultSet resultSet = queryExecution.execSelect();
+                if (resultSet != null) {
+                    List<Pair<Resource, Integer>> ret = new ArrayList<>();
+                    while (resultSet.hasNext()) {
+                        QuerySolution querySolution = resultSet.nextSolution();
+                        Resource s = querySolution.getResource(resourceVariable);
+                        Integer n = querySolution.getLiteral(num).getInt();
+                        ret.add(Pair.create(s, n));
+                    }
+                    return ret;
+                }
+                else throw new Exception("No results received from TripleStore");
+            }
+        }
 
     public Model executeConstruct(Query query) {
         Model model;

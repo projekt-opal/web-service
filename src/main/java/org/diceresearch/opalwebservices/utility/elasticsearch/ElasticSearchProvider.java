@@ -1,5 +1,6 @@
 package org.diceresearch.opalwebservices.utility.elasticsearch;
 
+import org.diceresearch.opalwebservices.model.dto.DataSetDTO;
 import org.diceresearch.opalwebservices.model.dto.DataSetLongViewDTO;
 import org.diceresearch.opalwebservices.model.dto.FilterDTO;
 import org.diceresearch.opalwebservices.model.dto.ReceivingFilterDTO;
@@ -23,7 +24,17 @@ public class ElasticSearchProvider implements DataProvider {
     }
 
     @Override
-    public List<FilterDTO> getFilters() {
+    public List<FilterDTO> getFilters(String searchQuery, String[] searchIn) {
         return null; //Todo complete it
+    }
+
+    @Override
+    public Long getCountOfFilterValue(String filterUri, String valueUri, String searchKey, String searchIn) {
+        return null;
+    }
+
+    @Override
+    public DataSetDTO getDataSet(String uri) {
+        return null;
     }
 }
