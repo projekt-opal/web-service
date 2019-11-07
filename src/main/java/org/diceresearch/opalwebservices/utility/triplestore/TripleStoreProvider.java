@@ -5,6 +5,9 @@ import org.apache.jena.query.ParameterizedSparqlString;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
+import org.apache.jena.rdf.model.impl.LiteralImpl;
+import org.apache.jena.vocabulary.DCAT;
+import org.apache.jena.vocabulary.DCTerms;
 import org.diceresearch.opalwebservices.model.dto.*;
 import org.diceresearch.opalwebservices.model.mapper.ModelToDataSetMapper;
 import org.diceresearch.opalwebservices.utility.DataProvider;
@@ -90,21 +93,71 @@ public class TripleStoreProvider implements DataProvider {
     @Override
     public List<FilterDTO> getFilters(String searchQuery, String[] searchIn) {
         List<FilterDTO> ret = new ArrayList<>();
-        ret.add(new FilterDTO()
+        ret.add(getThemeValues(searchQuery, searchIn));
+        ret.add(getPublisherValues(searchQuery, searchIn));
+        ret.add(getLicenseFilterValues(searchQuery, searchIn));
+        return ret;
+    }
+
+    private FilterDTO getThemeValues(String searchQuery, String[] searchIn) {
+        return new FilterDTO()
                 .setUri("http://www.w3.org/ns/dcat#theme")
                 .setTitle("Theme")
                 .setValues(Arrays.asList(
-                        new FilterValueDTO("Energy", "Energy", "label", -1),
-                        new FilterValueDTO("Environment", "Environment", "label", -1),
-                        new FilterValueDTO("http://projeckt-opal.de/theme/mcloud/climateAndWeather", "climate and weather", "label", -1))));
-        ret.add(new FilterDTO()
-                .setUri("http://www.w3.org/ns/dcat#publisher")
-                .setTitle("publisher")
-                .setValues(Arrays.asList(
-                        new FilterValueDTO("DB", "DB", "label", -1),
-                        new FilterValueDTO("others", "others", "label", -1))));
-        ret.add(getLicenseFilterValues(searchQuery, searchIn));
-        return ret;
+                        new FilterValueDTO("http://publications.europa.eu/resource/authority/data-theme/AGRI", "Agriculture, fisheries, forestry and food", "Agriculture, fisheries, forestry and food", -1),
+                        new FilterValueDTO("http://publications.europa.eu/resource/authority/data-theme/EDUC", "Education, culture and sport", "Education, culture and sport", -1),
+                        new FilterValueDTO("http://publications.europa.eu/resource/authority/data-theme/ENVI", "Environment", "Environment", -1),
+                        new FilterValueDTO("http://publications.europa.eu/resource/authority/data-theme/ENER", "Energy", "Energy", -1),
+                        new FilterValueDTO("http://publications.europa.eu/resource/authority/data-theme/TRAN", "Transport", "Transport", -1),
+                        new FilterValueDTO("http://publications.europa.eu/resource/authority/data-theme/TECH", "Science and technology", "Science and technology", -1),
+                        new FilterValueDTO("http://publications.europa.eu/resource/authority/data-theme/ECON", "Economy and finance", "Economy and finance", -1),
+                        new FilterValueDTO("http://publications.europa.eu/resource/authority/data-theme/SOCI", "Population and society", "Population and society", -1),
+                        new FilterValueDTO("http://publications.europa.eu/resource/authority/data-theme/HEAL", "Health", "Health", -1),
+                        new FilterValueDTO("http://publications.europa.eu/resource/authority/data-theme/GOVE", "Government and public sector", "Government and public sector", -1),
+                        new FilterValueDTO("http://publications.europa.eu/resource/authority/data-theme/REGI", "Regions and cities", "Regions and cities", -1),
+                        new FilterValueDTO("http://publications.europa.eu/resource/authority/data-theme/JUST", "Justice, legal system and public safety", "Justice, legal system and public safety", -1),
+                        new FilterValueDTO("http://publications.europa.eu/resource/authority/data-theme/INTR", "International issues", "International issues", -1),
+                        new FilterValueDTO("http://publications.europa.eu/resource/authority/data-theme/OP_DATPRO", "Provisional data", "Provisional data", -1)
+                ));
+
+    }
+    private FilterDTO getPublisherValues(String searchQuery, String[] searchIn) {
+        FilterDTO filterDTO = new FilterDTO()
+                .setUri("http://purl.org/dc/terms/publisher")
+                .setTitle("Publisher")
+                .setValues(new ArrayList<>());
+
+        String filterOptions = getSearchFiltersString(searchQuery, searchIn);
+        ParameterizedSparqlString pss = new ParameterizedSparqlString("" +
+                "PREFIX dcat: <http://www.w3.org/ns/dcat#> " +
+                "PREFIX dct: <http://purl.org/dc/terms/> " +
+                "select ?publisher ?num " +
+                "from <http://projekt-opal.de> " +
+                "WHERE { " +
+                " {  " +
+                " select ?publisher (COUNT(?publisher) AS ?num) " +
+                " WHERE { " +
+                " ?s a dcat:Dataset. " +
+                filterOptions +
+                " ?s dct:publisher ?publisher. " +
+                " } " +
+                " group by ?publisher " +
+                " } " +
+                "} " +
+                "ORDER BY DESC(?num) " +
+                "LIMIT 10 ");
+
+        try {
+            List<Pair<Resource, Integer>> pairs =
+                    sparQLRunner.execSelectReturnPair(pss.asQuery(), "publisher", "num");
+            pairs.forEach(p -> {
+                String uri = p.getKey().getURI();
+                filterDTO.getValues().add(new FilterValueDTO(uri, uri, uri, p.getValue()));
+            });
+        } catch (Exception ex) {
+            logger.error("", ex);
+        }
+        return filterDTO;
     }
 
     private FilterDTO getLicenseFilterValues(String searchQuery, String[] searchIn) {
@@ -118,24 +171,24 @@ public class TripleStoreProvider implements DataProvider {
                 "PREFIX dcat: <http://www.w3.org/ns/dcat#> " +
                 "PREFIX dct: <http://purl.org/dc/terms/> " +
                 "select ?license ?num " +
+                "from <http://projekt-opal.de> " +
                 "WHERE { " +
-                "    {  " +
-                "      select ?license (COUNT(?license) AS ?num) " +
-                "      WHERE { " +
-                "        graph ?g { " +
-                "          ?s a dcat:Dataset. " +
-                filterOptions +
-                "          ?s dcat:distribution ?dist. " +
-                "          ?dist dct:license ?license. " +
-                "        }  " +
-                "      } " +
-                "      group by ?license " +
-                "   } " +
-                "} " +
+                " { " +
+                    " select ?license (COUNT(?license) AS ?num) " +
+                    " WHERE { " +
+                    " ?s a dcat:Dataset. " +
+                    filterOptions +
+                    " ?s dcat:distribution ?dist. " +
+                    " ?dist dct:license ?license. " +
+                " } " +
+                " group by ?license " +
+                " } " +
+                " } " +
                 "ORDER BY DESC(?num) " +
-                "LIMIT 10");
+                "LIMIT 10 ");
 
         try {
+            logger.info(pss.toString());
             List<Pair<Resource, Integer>> pairs =
                     sparQLRunner.execSelectReturnPair(pss.asQuery(), "license", "num");
             pairs.forEach(p -> {
