@@ -35,7 +35,7 @@ public class TripleStoreProvider implements DataProvider {
     }
 
     @Override
-    public long getNumberOfDatasets(String searchQuery, String[] searchIn, String orderBy, ReceivingFilterDTO[] filters) {
+    public long getNumberOfDatasets(String searchQuery, String[] searchIn, String orderBy, FilterDTO[] filters) {
         Long num = -1L;
         try {
             ParameterizedSparqlString pss = new ParameterizedSparqlString();
@@ -50,8 +50,7 @@ public class TripleStoreProvider implements DataProvider {
             pss.setNsPrefix("dcat", "http://www.w3.org/ns/dcat#");
             pss.setNsPrefix("dct", "http://purl.org/dc/terms/");
 
-            String s = pss.toString();
-            System.out.println(s);
+            logger.info(pss.toString());
             num = sparQLRunner.execSelectCount(pss.asQuery());
         } catch (Exception e) {
             logger.error("An error occurred in getting the results", e);
@@ -60,7 +59,7 @@ public class TripleStoreProvider implements DataProvider {
     }
 
     @Override
-    public List<DataSetLongViewDTO> getSubListOFDataSets(String searchQuery, Long low, Long limit, String[] searchIn, String orderBy, ReceivingFilterDTO[] filters) {
+    public List<DataSetLongViewDTO> getSubListOFDataSets(String searchQuery, Long low, Long limit, String[] searchIn, String orderBy, FilterDTO[] filters) {
         List<DataSetLongViewDTO> ret = new ArrayList<>();
         try {
             ParameterizedSparqlString pss = new ParameterizedSparqlString();
@@ -75,6 +74,7 @@ public class TripleStoreProvider implements DataProvider {
             pss.setNsPrefix("dcat", "http://www.w3.org/ns/dcat#");
             pss.setNsPrefix("dct", "http://purl.org/dc/terms/");
 
+            logger.info(pss.toString());
             List<Resource> dataSets = sparQLRunner.execSelect(pss.asQuery(), "s");
 
             dataSets.forEach(dataSet -> {
@@ -234,7 +234,7 @@ public class TripleStoreProvider implements DataProvider {
         return modelToDataSetMapper.toDataSetDTO(model);
     }
 
-    private String getSparQLSearchQuery(String searchQuery, String[] searchIn, ReceivingFilterDTO[] filters) {
+    private String getSparQLSearchQuery(String searchQuery, String[] searchIn, FilterDTO[] filters) {
         StringBuilder filtersString = new StringBuilder();
         if (searchQuery.length() > 0) {
             if (searchIn == null || searchIn.length == 0)
@@ -267,26 +267,26 @@ public class TripleStoreProvider implements DataProvider {
                 filtersString.append("). ");
             }
         }
-//        if ((filters != null && filters.length > 0)) {
-//            for (ReceivingFilterDTO entry : filters) {
-//                String key = entry.getUri();
-//                String[] values = entry.getValues();
-//                if (values.length == 1) {
-//                    if (values[0].startsWith("http://"))
-//                        filtersString.append(" ?s <").append(key).append("> <").append(values[0]).append("> .");
-//                    else
-//                        filtersString.append(" ?s <").append(key).append("> \"").append(values[0]).append("\" .");
-//                } else if (values.length > 1) {
-//                    filtersString.append("VALUES (?value) {  ");
-//                    for (String val : values)
-//                        if (val.startsWith("http://"))
-//                            filtersString.append(" ( <").append(val).append("> )");
-//                        else
-//                            filtersString.append(" ( \"").append(val).append("\" )");
-//                    filtersString.append("} ?s <").append(key).append("> ?value.");
-//                }
-//            }
-//        }
+        if ((filters != null && filters.length > 0)) {
+            for (FilterDTO filterDTO : filters) {
+                String key = filterDTO.getUri();
+                List<FilterValueDTO> values = filterDTO.getValues();
+                if (values.size() == 1) {
+                    if (values.get(0).getUri().startsWith("http://"))
+                        filtersString.append(" ?s <").append(key).append("> <").append(values.get(0).getUri()).append("> .");
+                    else
+                        filtersString.append(" ?s <").append(key).append("> \"").append(values.get(0).getUri()).append("\" .");
+                } else if (values.size() > 1) {
+                    filtersString.append("VALUES (?value) {  ");
+                    for (FilterValueDTO val : values)
+                        if (val.getUri().startsWith("http://"))
+                            filtersString.append(" ( <").append(val.getUri()).append("> )");
+                        else
+                            filtersString.append(" ( \"").append(val.getUri()).append("\" )");
+                    filtersString.append("} ?s <").append(key).append("> ?value.");
+                }
+            }
+        }
         return filtersString.toString();
     }
 

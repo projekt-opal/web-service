@@ -7,7 +7,7 @@ public class DataSetLongViewDTO {
     private String title;
     private String description;
     private String issueDate;
-    private String theme;
+    private List<String> theme;
     private List<String> keywords;
     private String fileType;
     private String overallRating;
@@ -18,7 +18,7 @@ public class DataSetLongViewDTO {
     public DataSetLongViewDTO() {
     }
 
-    public DataSetLongViewDTO(String uri, String title, String description, String issueDate, String theme,
+    public DataSetLongViewDTO(String uri, String title, String description, String issueDate, List<String> theme,
                               List<String> keywords, String fileType, String overallRating, String catalog, PublisherDTO publisherDTO) {
         this.uri = uri;
         this.title = title;
@@ -59,11 +59,11 @@ public class DataSetLongViewDTO {
         return this;
     }
 
-    public String getTheme() {
+    public List<String> getTheme() {
         return theme;
     }
 
-    public DataSetLongViewDTO setTheme(String theme) {
+    public DataSetLongViewDTO setTheme(List<String> theme) {
         this.theme = theme;
         return this;
     }

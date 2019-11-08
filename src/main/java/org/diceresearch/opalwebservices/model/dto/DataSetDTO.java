@@ -9,12 +9,12 @@ public class DataSetDTO {
     private String title;
     private String description;
     private String issueDate;
-    private String theme;
+    private List<String> theme;
     private List<String> keywords;
     private String overallRating;
     private PublisherDTO publisherDTO;
     private List<DistributionDTO> distributionDTOS;
-    private List<QualityMessurementDTO> qualityMessurementDTOS;
+    private List<QualityMeasurementDOT> qualityMeasurementDOS;
 
     public DataSetDTO() {
     }
@@ -55,11 +55,11 @@ public class DataSetDTO {
         return this;
     }
 
-    public String getTheme() {
+    public List<String> getTheme() {
         return theme;
     }
 
-    public DataSetDTO setTheme(String theme) {
+    public DataSetDTO setTheme(List<String> theme) {
         this.theme = theme;
         return this;
     }
@@ -103,12 +103,12 @@ public class DataSetDTO {
     }
 
     @JsonProperty("qualityMetrics")
-    public List<QualityMessurementDTO> getQualityMessurementDTOS() {
-        return qualityMessurementDTOS;
+    public List<QualityMeasurementDOT> getQualityMeasurementDOS() {
+        return qualityMeasurementDOS;
     }
 
-    public DataSetDTO setQualityMessurementDTOS(List<QualityMessurementDTO> qualityMessurementDTOS) {
-        this.qualityMessurementDTOS = qualityMessurementDTOS;
+    public DataSetDTO setQualityMeasurementDOS(List<QualityMeasurementDOT> qualityMeasurementDOS) {
+        this.qualityMeasurementDOS = qualityMeasurementDOS;
         return this;
     }
 }

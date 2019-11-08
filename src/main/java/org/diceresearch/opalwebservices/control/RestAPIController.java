@@ -29,7 +29,7 @@ public class RestAPIController {
             @RequestParam(name = "searchQuery", required = false, defaultValue = "") String searchQuery,
             @RequestParam(name = "searchIn", required = false) String[] searchIn,
             @RequestParam(name = "orderBy", required = false) String orderBy, // TODO: 26.02.19 if quality metrics can be set then we need to have asc, des
-            @RequestBody(required = false) ReceivingFilterDTO[] filters
+            @RequestBody(required = false) FilterDTO[] filters
     ) {
         return provider.getNumberOfDatasets(searchQuery, searchIn, orderBy, filters);
     }
@@ -42,7 +42,7 @@ public class RestAPIController {
             @RequestParam(name = "orderBy", required = false) String orderBy, // TODO: 26.02.19 if quality metrics can be set then we need to have asc, des
             @RequestParam(name = "low", required = false, defaultValue = "0") Long low,
             @RequestParam(name = "limit", required = false, defaultValue = "10") Long limit,
-            @RequestBody(required = false) ReceivingFilterDTO[] filters
+            @RequestBody(required = false) FilterDTO[] filters
     ) {
         return provider.getSubListOFDataSets(searchQuery, low, limit, searchIn, orderBy, filters);
     }

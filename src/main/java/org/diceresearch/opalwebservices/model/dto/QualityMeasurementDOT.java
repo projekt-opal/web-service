@@ -1,13 +1,13 @@
 package org.diceresearch.opalwebservices.model.dto;
 
-public class QualityMessurementDTO {
+public class QualityMeasurementDOT {
     private String quality;
     private Integer value;
 
-    public QualityMessurementDTO() {
+    public QualityMeasurementDOT() {
     }
 
-    public QualityMessurementDTO(String quality, Integer value) {
+    public QualityMeasurementDOT(String quality, Integer value) {
         this.quality = quality;
         this.value = value;
     }
@@ -16,7 +16,7 @@ public class QualityMessurementDTO {
         return quality;
     }
 
-    public QualityMessurementDTO setQuality(String quality) {
+    public QualityMeasurementDOT setQuality(String quality) {
         this.quality = quality;
         return this;
     }
@@ -25,7 +25,7 @@ public class QualityMessurementDTO {
         return value;
     }
 
-    public QualityMessurementDTO setValue(Integer value) {
+    public QualityMeasurementDOT setValue(Integer value) {
         this.value = value;
         return this;
     }

@@ -4,12 +4,12 @@ import org.apache.jena.rdf.model.*;
 import org.apache.jena.vocabulary.DCAT;
 import org.apache.jena.vocabulary.DCTerms;
 import org.apache.jena.vocabulary.RDF;
-import org.apache.jena.vocabulary.RDFS;
 import org.diceresearch.opalwebservices.model.dto.*;
 import org.mapstruct.Mapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
@@ -23,7 +23,7 @@ public abstract class ModelToDataSetMapper {
             String uri = getUri(model);
             String title = getTitle(model);
             String description = getDescription(model);
-            String theme = getTheme(model);
+            List<String> theme = getTheme(model);
             String fileType = "PDF";
             String issueDate = "2018-12-05";
             Random r = new Random();
@@ -39,8 +39,7 @@ public abstract class ModelToDataSetMapper {
                     .setFileType(fileType)
                     .setOverallRating(overAllRating)
                     .setCatalog(catalog.getURI())
-                    .setPublisherDTO(new PublisherDTO("publisher name", "publisher uri"))
-                    ;
+                    .setPublisherDTO(new PublisherDTO("publisher name", "publisher uri"));
             return dataSetLongViewDTO;
         } catch (Exception e) {
             logger.error("Error in ModelToLongViewDTOMapper ", e);
@@ -53,7 +52,7 @@ public abstract class ModelToDataSetMapper {
             String uri = getUri(model);
             String title = getTitle(model);
             String description = getDescription(model);
-            String theme = getTheme(model);
+            List<String> theme = getTheme(model);
             String issueDate = "2018-12-05";
             Random r = new Random();
             String overAllRating = Double.toString(r.nextDouble() * 4 + 1);
@@ -68,8 +67,7 @@ public abstract class ModelToDataSetMapper {
                     .setOverallRating(overAllRating)
                     .setPublisherDTO(new PublisherDTO("publisher name", "publisher uri"))
                     .setDistributionDTOS(Arrays.asList(new DistributionDTO("uri1", "pdf")))
-                    .setQualityMessurementDTOS(Arrays.asList(new QualityMessurementDTO("q1", 5)))
-                    ;
+                    .setQualityMeasurementDOS(Arrays.asList(new QualityMeasurementDOT("q1", 5)));
             return dataSetDTO;
         } catch (Exception e) {
             logger.error("Error in ModelToLongViewDTOMapper ", e);
@@ -97,16 +95,29 @@ public abstract class ModelToDataSetMapper {
         return rdfNode.asLiteral().getString();
     }
 
-    private String getTheme(Model model) {
+    private List<String> getTheme(Model model) {
+        ArrayList<String> ret = new ArrayList<>();
         NodeIterator iterator = model.listObjectsOfProperty(DCAT.theme);
-        if (!iterator.hasNext()) return "";// TODO: 27.02.19 What exactly we should return?
-        RDFNode rdfNode = iterator.nextNode();//must exist
-        if (rdfNode.isLiteral()) return rdfNode.asLiteral().getString();
-        if (rdfNode.asResource().getURI().startsWith("http://projeckt-opal.de/theme/mcloud")) {
-            NodeIterator nodeIterator = model.listObjectsOfProperty(rdfNode.asResource(), RDFS.label);
-            if (nodeIterator.hasNext()) nodeIterator.nextNode().asLiteral().getString();
-            //else go to next line return URI
+        while (iterator.hasNext()) {
+            RDFNode rdfNode = iterator.nextNode();//must exist
+            if (rdfNode.isLiteral()) ret.add(rdfNode.asLiteral().getString());
+            if (rdfNode.isURIResource()) {
+                NodeIterator nodeIterator = model.listObjectsOfProperty(rdfNode.asResource(),
+                        ResourceFactory.createProperty("http://www.w3.org/2004/02/skos/core#prefLabel"));
+                if (nodeIterator.hasNext()) ret.add(nodeIterator.nextNode().asLiteral().getString());
+                else {
+                    nodeIterator = model.listObjectsOfProperty(rdfNode.asResource(),
+                            ResourceFactory.createProperty("http://www.w3.org/2004/02/skos/core#prefLabel", "en"));
+                    if (nodeIterator.hasNext()) ret.add(nodeIterator.nextNode().asLiteral().getString());
+                    else {
+                        nodeIterator = model.listObjectsOfProperty(rdfNode.asResource(),
+                                ResourceFactory.createProperty("http://www.w3.org/2004/02/skos/core#prefLabel", "de"));
+                        if (nodeIterator.hasNext()) ret.add(nodeIterator.nextNode().asLiteral().getString());
+                        else ret.add(rdfNode.asResource().getURI());
+                    }
+                }
+            }
         }
-        return rdfNode.asResource().getURI();
+        return ret;
     }
 }
