@@ -1,11 +1,11 @@
 package org.diceresearch.opalwebservices.model.mapper;
 
-import org.diceresearch.opalwebservices.model.dto.*;
 import org.apache.jena.rdf.model.*;
 import org.apache.jena.vocabulary.DCAT;
 import org.apache.jena.vocabulary.DCTerms;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
+import org.diceresearch.opalwebservices.model.dto.*;
 import org.mapstruct.Mapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

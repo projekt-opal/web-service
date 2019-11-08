@@ -17,7 +17,7 @@ public interface DataProvider {
 
     List<FilterDTO> getFilters(String searchQuery, String[] searchIn);
 
-    Long getCountOfFilterValue(String filterUri, String valueUri, String searchKey, String searchIn);
+    Long getCountOfFilterValue(String filterUri, String valueUri, String searchKey, String[] searchIn);
 
     DataSetDTO getDataSet(String uri);
 }

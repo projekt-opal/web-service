@@ -68,7 +68,7 @@ public class RestAPIController {
             @RequestParam(required = false) String filterUri,
             @RequestParam(required = false) String valueUri,
             @RequestParam(required = false) String searchKey,
-            @RequestParam(required = false) String searchIn
+            @RequestParam(required = false) String[] searchIn
     ) {
         return provider.getCountOfFilterValue(filterUri, valueUri, searchKey, searchIn);
     }

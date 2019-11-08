@@ -5,9 +5,6 @@ import org.apache.jena.query.ParameterizedSparqlString;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
-import org.apache.jena.rdf.model.impl.LiteralImpl;
-import org.apache.jena.vocabulary.DCAT;
-import org.apache.jena.vocabulary.DCTerms;
 import org.diceresearch.opalwebservices.model.dto.*;
 import org.diceresearch.opalwebservices.model.mapper.ModelToDataSetMapper;
 import org.diceresearch.opalwebservices.utility.DataProvider;
@@ -19,7 +16,6 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 @Profile(value = {"triplestore", "default"})
@@ -93,13 +89,13 @@ public class TripleStoreProvider implements DataProvider {
     @Override
     public List<FilterDTO> getFilters(String searchQuery, String[] searchIn) {
         List<FilterDTO> ret = new ArrayList<>();
-        ret.add(getThemeValues(searchQuery, searchIn));
+        ret.add(getThemeValues());
         ret.add(getPublisherValues(searchQuery, searchIn));
         ret.add(getLicenseFilterValues(searchQuery, searchIn));
         return ret;
     }
 
-    private FilterDTO getThemeValues(String searchQuery, String[] searchIn) {
+    private FilterDTO getThemeValues() {
         return new FilterDTO()
                 .setUri("http://www.w3.org/ns/dcat#theme")
                 .setTitle("Theme")
@@ -121,6 +117,7 @@ public class TripleStoreProvider implements DataProvider {
                 ));
 
     }
+
     private FilterDTO getPublisherValues(String searchQuery, String[] searchIn) {
         FilterDTO filterDTO = new FilterDTO()
                 .setUri("http://purl.org/dc/terms/publisher")
@@ -174,12 +171,12 @@ public class TripleStoreProvider implements DataProvider {
                 "from <http://projekt-opal.de> " +
                 "WHERE { " +
                 " { " +
-                    " select ?license (COUNT(?license) AS ?num) " +
-                    " WHERE { " +
-                    " ?s a dcat:Dataset. " +
-                    filterOptions +
-                    " ?s dcat:distribution ?dist. " +
-                    " ?dist dct:license ?license. " +
+                " select ?license (COUNT(?license) AS ?num) " +
+                " WHERE { " +
+                " ?s a dcat:Dataset. " +
+                filterOptions +
+                " ?s dcat:distribution ?dist. " +
+                " ?dist dct:license ?license. " +
                 " } " +
                 " group by ?license " +
                 " } " +
@@ -223,7 +220,7 @@ public class TripleStoreProvider implements DataProvider {
     }
 
     @Override
-    public Long getCountOfFilterValue(String filterUri, String valueUri, String searchKey, String searchIn) {
+    public Long getCountOfFilterValue(String filterUri, String valueUri, String searchKey, String[] searchIn) {
         return 10L;
     }
 

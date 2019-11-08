@@ -29,7 +29,7 @@ public class ElasticSearchProvider implements DataProvider {
     }
 
     @Override
-    public Long getCountOfFilterValue(String filterUri, String valueUri, String searchKey, String searchIn) {
+    public Long getCountOfFilterValue(String filterUri, String valueUri, String searchKey, String[] searchIn) {
         return null;
     }
 
