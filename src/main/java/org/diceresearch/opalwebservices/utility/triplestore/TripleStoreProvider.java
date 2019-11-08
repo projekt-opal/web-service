@@ -40,7 +40,7 @@ public class TripleStoreProvider implements DataProvider {
         try {
             ParameterizedSparqlString pss = new ParameterizedSparqlString();
 
-            String filtersString = getFiltersString(searchQuery, filters);
+            String filtersString = getSparQLSearchQuery(searchQuery, searchIn, filters);
 
             String query = "SELECT (COUNT(DISTINCT ?s) AS ?num) WHERE {  GRAPH ?g { " +
                     "?s a dcat:Dataset. " + filtersString +
@@ -48,7 +48,10 @@ public class TripleStoreProvider implements DataProvider {
 
             pss.setCommandText(query);
             pss.setNsPrefix("dcat", "http://www.w3.org/ns/dcat#");
+            pss.setNsPrefix("dct", "http://purl.org/dc/terms/");
 
+            String s = pss.toString();
+            System.out.println(s);
             num = sparQLRunner.execSelectCount(pss.asQuery());
         } catch (Exception e) {
             logger.error("An error occurred in getting the results", e);
@@ -62,7 +65,7 @@ public class TripleStoreProvider implements DataProvider {
         try {
             ParameterizedSparqlString pss = new ParameterizedSparqlString();
 
-            String filtersString = getFiltersString(searchQuery, filters);
+            String filtersString = getSparQLSearchQuery(searchQuery, searchIn, filters);
 
             String query = "SELECT DISTINCT ?s WHERE { GRAPH ?g { " +
                     "?s a dcat:Dataset. " + filtersString +
@@ -70,6 +73,7 @@ public class TripleStoreProvider implements DataProvider {
 
             pss.setCommandText(query);
             pss.setNsPrefix("dcat", "http://www.w3.org/ns/dcat#");
+            pss.setNsPrefix("dct", "http://purl.org/dc/terms/");
 
             List<Resource> dataSets = sparQLRunner.execSelect(pss.asQuery(), "s");
 
@@ -230,10 +234,39 @@ public class TripleStoreProvider implements DataProvider {
         return modelToDataSetMapper.toDataSetDTO(model);
     }
 
-    private String getFiltersString(String searchQuery, ReceivingFilterDTO[] filters) {
+    private String getSparQLSearchQuery(String searchQuery, String[] searchIn, ReceivingFilterDTO[] filters) {
         StringBuilder filtersString = new StringBuilder();
-        if (searchQuery.length() > 0)
-            filtersString.append("?s ?p ?o. +\n" + "FILTER(isLiteral(?o)).  +\n" + "FILTER CONTAINS (STR(?o),\" + searchQuery + \").");
+        if (searchQuery.length() > 0) {
+            if (searchIn == null || searchIn.length == 0)
+                filtersString
+                        .append("?s ?p ?o. ")
+                        .append("FILTER(isLiteral(?o)).  ")
+                        .append("FILTER CONTAINS (STR(?o),\"")
+                        .append(searchQuery)
+                        .append("\"). ");
+            else {
+                ArrayList<String> filterValues = new ArrayList<>();
+                if (Arrays.asList(searchIn).contains("title")) {
+                    filtersString
+                            .append("?s dct:title ?title. ");
+                    filterValues.add("CONTAINS (STR(?title),\"" + searchQuery + "\") ");
+                }
+                if (Arrays.asList(searchIn).contains("description")) {
+                    filtersString
+                            .append("?s dct:description ?description. ");
+                    filterValues.add("CONTAINS (STR(?description),\"" + searchQuery + "\") ");
+                }
+                if (Arrays.asList(searchIn).contains("keyword")) {
+                    filtersString
+                            .append("?s dcat:keyword ?keyword. ");
+                    filterValues.add("CONTAINS (STR(?keyword),\"" + searchQuery + "\") ");
+                }
+                filtersString.append("FILTER ( ").append(filterValues.get(0));
+                for (int i = 1; i < filterValues.size(); i++)
+                    filtersString.append(" || ").append(filterValues.get(i));
+                filtersString.append("). ");
+            }
+        }
 //        if ((filters != null && filters.length > 0)) {
 //            for (ReceivingFilterDTO entry : filters) {
 //                String key = entry.getUri();
