@@ -224,7 +224,26 @@ public class TripleStoreProvider implements DataProvider {
 
     @Override
     public Long getCountOfFilterValue(String filterUri, String valueUri, String searchKey, String[] searchIn) {
-        return 10L;
+        String filterOptions = getSparQLSearchQuery(searchKey, searchIn, null);
+        ParameterizedSparqlString pss = new ParameterizedSparqlString("" +
+                "PREFIX dcat: <http://www.w3.org/ns/dcat#> " +
+                "PREFIX dct: <http://purl.org/dc/terms/> " +
+                "select (COUNT(?s) AS ?num) " +
+                "from <http://projekt-opal.de> " +
+                "WHERE {  " +
+                    "?s a dcat:Dataset. " +
+                    filterOptions +
+                    "FILTER(EXISTS{?s dcat:theme ?theme.}) " +
+                "}");
+        pss.setParam("?theme", ResourceFactory.createResource(valueUri));
+
+        try {
+            logger.info(pss.toString());
+            return sparQLRunner.execSelectCount(pss.asQuery());
+        } catch (Exception ex) {
+            logger.error("", ex);
+        }
+        return -1L;
     }
 
     @Override

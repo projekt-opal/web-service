@@ -63,14 +63,13 @@ public class RestAPIController {
 
     // TODO: 10/1/19 An DTO for the RequestBody is needed
     @CrossOrigin
-    @GetMapping("/filter/count")
+    @PostMapping("/filter/count")
     public Long getCount(
-            @RequestParam(required = false) String filterUri,
-            @RequestParam(required = false) String valueUri,
             @RequestParam(required = false) String searchKey,
-            @RequestParam(required = false) String[] searchIn
+            @RequestParam(required = false) String[] searchIn,
+            @RequestBody(required = false) FilterValueCountDTO filterValueCountDTO
     ) {
-        return provider.getCountOfFilterValue(filterUri, valueUri, searchKey, searchIn);
+        return provider.getCountOfFilterValue(filterValueCountDTO.getFilterUri(), filterValueCountDTO.getValueUri(), searchKey, searchIn);
     }
 
     @CrossOrigin
