@@ -94,10 +94,10 @@ public class TripleStoreProvider implements DataProvider {
     public List<FilterDTO> getFilters(String searchKey, String[] searchIn) {
         List<FilterDTO> ret = new ArrayList<>();
         ret.add(getThemeValues());
-        FilterDTO publishers = getPublisherValues(searchKey, searchIn);
+        FilterDTO publishers = getPublisherValues(searchKey, searchIn, null);
         if(publishers.getValues().size() > 0)
             ret.add(publishers);
-        FilterDTO licenses = getLicenseFilterValues(searchKey, searchIn);
+        FilterDTO licenses = getLicenseFilterValues(searchKey, searchIn, null);
         if(licenses.getValues().size() > 0)
             ret.add(licenses);
         return ret;
@@ -126,7 +126,7 @@ public class TripleStoreProvider implements DataProvider {
 
     }
 
-    private FilterDTO getPublisherValues(String searchQuery, String[] searchIn) {
+    private FilterDTO getPublisherValues(String searchQuery, String[] searchIn, String filterText) {
         FilterDTO filterDTO = new FilterDTO()
                 .setUri("http://purl.org/dc/terms/publisher")
                 .setTitle("Publisher")
@@ -139,12 +139,13 @@ public class TripleStoreProvider implements DataProvider {
                 "select ?publisher ?num " +
                 "from <http://projekt-opal.de> " +
                 "WHERE { " +
-                " {  " +
+                " { " +
                 " select ?publisher (COUNT(?publisher) AS ?num) " +
                 " WHERE { " +
                 " ?s a dcat:Dataset. " +
                 filterOptions +
                 " ?s dct:publisher ?publisher. " +
+                (filterText != null ? "FILTER(CONTAINS(STR(?publisher), \"" + filterText + "\"))" : "") +
                 " } " +
                 " group by ?publisher " +
                 " } " +
@@ -165,7 +166,7 @@ public class TripleStoreProvider implements DataProvider {
         return filterDTO;
     }
 
-    private FilterDTO getLicenseFilterValues(String searchKey, String[] searchIn) {
+    private FilterDTO getLicenseFilterValues(String searchKey, String[] searchIn, String filterText) {
         FilterDTO filterDTO = new FilterDTO()
                 .setUri("http://purl.org/dc/terms/license")
                 .setTitle("License")
@@ -177,14 +178,15 @@ public class TripleStoreProvider implements DataProvider {
                 "PREFIX dct: <http://purl.org/dc/terms/> " +
                 "select ?license ?num " +
                 "from <http://projekt-opal.de> " +
-                "WHERE {  " +
-                  "{  " +
-                    "select ?license (COUNT(?license) AS ?num)  " +
-                    "WHERE {  " +
+                "WHERE { " +
+                  "{ " +
+                    "select ?license (COUNT(?license) AS ?num) " +
+                    "WHERE { " +
                       "?s a dcat:Dataset. " +
                 filterOptions +
                       "?s dcat:distribution ?dist. " +
                       "?dist dct:license ?license. " +
+                (filterText != null ? "FILTER(CONTAINS(STR(?license), \"" + filterText + "\"))" : "") +
                     "}  group by ?license " +
                   "} " +
                  "UNION " +
@@ -195,6 +197,7 @@ public class TripleStoreProvider implements DataProvider {
                        "?s a dcat:Dataset. " +
                 filterOptions +
                        "?s dct:license ?license. " +
+                (filterText != null ? "FILTER(CONTAINS(STR(?license), \"" + filterText + "\"))" : "")+
                     "}  group by ?license " +
                   "} " +
                 "} " +
@@ -215,13 +218,6 @@ public class TripleStoreProvider implements DataProvider {
         return filterDTO;
     }
 
-    private boolean contains(String[] searchIn, String s) {
-        for (String search : searchIn)
-            if (search.equals(s))
-                return true;
-        return false;
-    }
-
     @Override
     public Long getCountOfFilterValue(String filterUri, String valueUri, String searchKey, String[] searchIn) {
         String filterOptions = getSparQLSearchQuery(searchKey, searchIn, null);
@@ -230,7 +226,7 @@ public class TripleStoreProvider implements DataProvider {
                 "PREFIX dct: <http://purl.org/dc/terms/> " +
                 "select (COUNT(?s) AS ?num) " +
                 "from <http://projekt-opal.de> " +
-                "WHERE {  " +
+                "WHERE { " +
                     "?s a dcat:Dataset. " +
                     filterOptions +
                     "FILTER(EXISTS{?s dcat:theme ?theme.}) " +
@@ -250,6 +246,17 @@ public class TripleStoreProvider implements DataProvider {
     public DataSetDTO getDataSet(String uri) {
         Model model = getGraphOfDataSet(ResourceFactory.createResource(uri));
         return modelToDataSetMapper.toDataSetDTO(model);
+    }
+
+    @Override
+    public FilterDTO getTopFilterOptions(String filterType, String searchKey, String[] searchIn, String filterText) {
+        switch (filterType.toLowerCase()) {
+            case "license":
+                return getLicenseFilterValues(searchKey, searchIn, filterText);
+            case "publisher":
+                return getPublisherValues(searchKey, searchIn, filterText);
+        }
+        return null;
     }
 
     private String getSparQLSearchQuery(String searchKey, String[] searchIn, FilterDTO[] filters) {

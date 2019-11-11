@@ -74,22 +74,12 @@ public class RestAPIController {
 
     @CrossOrigin
     @GetMapping("/filteredOptions")
-    public List<FilterValueDTO> getFilter(@RequestParam(name = "name", required = false) String name) {
-        try {
-            Thread.sleep(1500);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        List<FilterValueDTO> filterValueDTOS = Arrays.asList(
-                new FilterValueDTO("uri1", "value1", "qwertyy", 20),
-                new FilterValueDTO("uri2", "value2", "asdfg", 40),
-                new FilterValueDTO("uri3", "value3", "label3", 20)
-        );
-        List<FilterValueDTO> collect = filterValueDTOS
-                .stream()
-                .filter(x -> x.getLabel().contains(name)).collect(Collectors.toList());
-        logger.info(Arrays.toString(collect.toArray(new FilterValueDTO[0])));
-        return collect;
+    public FilterDTO getFilter(
+            @RequestParam(required = false) String filterText,
+            @RequestParam(required = false) String searchKey,
+            @RequestParam(required = false) String[] searchIn,
+            @RequestParam(required = false) String filterType) {
+        return provider.getTopFilterOptions(filterType, searchKey, searchIn, filterText);
     }
 
 }

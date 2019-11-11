@@ -3,6 +3,7 @@ package org.diceresearch.opalwebservices.utility.elasticsearch;
 import org.diceresearch.opalwebservices.model.dto.DataSetDTO;
 import org.diceresearch.opalwebservices.model.dto.DataSetLongViewDTO;
 import org.diceresearch.opalwebservices.model.dto.FilterDTO;
+import org.diceresearch.opalwebservices.model.dto.FilterValueDTO;
 import org.diceresearch.opalwebservices.utility.DataProvider;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
@@ -34,6 +35,11 @@ public class ElasticSearchProvider implements DataProvider {
 
     @Override
     public DataSetDTO getDataSet(String uri) {
+        return null;
+    }
+
+    @Override
+    public FilterDTO getTopFilterOptions(String filterType, String searchKey, String[] searchIn, String filterText) {
         return null;
     }
 }
