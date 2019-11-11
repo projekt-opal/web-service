@@ -26,25 +26,25 @@ public class RestAPIController {
     @CrossOrigin
     @PostMapping("/dataSets/getNumberOfDataSets")
     public Long getNumberOFDataSets(
-            @RequestParam(name = "searchQuery", required = false, defaultValue = "") String searchQuery,
+            @RequestParam(name = "searchKey", required = false, defaultValue = "") String searchKey,
             @RequestParam(name = "searchIn", required = false) String[] searchIn,
             @RequestParam(name = "orderBy", required = false) String orderBy, // TODO: 26.02.19 if quality metrics can be set then we need to have asc, des
             @RequestBody(required = false) FilterDTO[] filters
     ) {
-        return provider.getNumberOfDatasets(searchQuery, searchIn, orderBy, filters);
+        return provider.getNumberOfDatasets(searchKey, searchIn, orderBy, filters);
     }
 
     @CrossOrigin
     @PostMapping("/dataSets/getSubList")
     public List<DataSetLongViewDTO> getSubListOFDataSets(
-            @RequestParam(name = "searchQuery", required = false, defaultValue = "") String searchQuery,
+            @RequestParam(name = "searchKey", required = false, defaultValue = "") String searchKey,
             @RequestParam(name = "searchIn", required = false) String[] searchIn,
             @RequestParam(name = "orderBy", required = false) String orderBy, // TODO: 26.02.19 if quality metrics can be set then we need to have asc, des
             @RequestParam(name = "low", required = false, defaultValue = "0") Long low,
             @RequestParam(name = "limit", required = false, defaultValue = "10") Long limit,
             @RequestBody(required = false) FilterDTO[] filters
     ) {
-        return provider.getSubListOFDataSets(searchQuery, low, limit, searchIn, orderBy, filters);
+        return provider.getSubListOFDataSets(searchKey, low, limit, searchIn, orderBy, filters);
     }
 
     @CrossOrigin
@@ -56,9 +56,9 @@ public class RestAPIController {
     @CrossOrigin
     @GetMapping("/filters/list")
     public List<FilterDTO> getFilters(
-            @RequestParam(name = "searchQuery", required = false, defaultValue = "") String searchQuery,
+            @RequestParam(name = "searchKey", required = false, defaultValue = "") String searchKey,
             @RequestParam(name = "searchIn", required = false) String[] searchIn) {
-        return provider.getFilters(searchQuery, searchIn);
+        return provider.getFilters(searchKey, searchIn);
     }
 
     // TODO: 10/1/19 An DTO for the RequestBody is needed

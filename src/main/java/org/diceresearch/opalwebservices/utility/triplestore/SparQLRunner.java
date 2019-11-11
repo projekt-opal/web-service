@@ -75,9 +75,12 @@ public class SparQLRunner implements CredentialsProvider {
             if (resultSet != null) {
                 List<Resource> ret = new ArrayList<>();
                 while (resultSet.hasNext()) {
-                    QuerySolution querySolution = resultSet.nextSolution();
-                    Resource s = querySolution.getResource(resourceVariable);
-                    ret.add(s);
+                    try {
+                        QuerySolution querySolution = resultSet.nextSolution();
+                        Resource s = querySolution.getResource(resourceVariable);
+                        ret.add(s);
+                    } catch (Exception ignore) {
+                    }
                 }
                 return ret;
             }
@@ -91,10 +94,13 @@ public class SparQLRunner implements CredentialsProvider {
                 if (resultSet != null) {
                     List<Pair<Resource, Integer>> ret = new ArrayList<>();
                     while (resultSet.hasNext()) {
-                        QuerySolution querySolution = resultSet.nextSolution();
-                        Resource s = querySolution.getResource(resourceVariable);
-                        Integer n = querySolution.getLiteral(num).getInt();
-                        ret.add(Pair.create(s, n));
+                        try {
+                            QuerySolution querySolution = resultSet.nextSolution();
+                            Resource s = querySolution.getResource(resourceVariable);
+                            Integer n = querySolution.getLiteral(num).getInt();
+                            ret.add(Pair.create(s, n));
+                        } catch (Exception ignore) {
+                        }
                     }
                     return ret;
                 }

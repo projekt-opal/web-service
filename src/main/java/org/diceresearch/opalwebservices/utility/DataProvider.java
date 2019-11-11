@@ -10,11 +10,11 @@ import java.util.List;
 @Component
 public interface DataProvider {
 
-    long getNumberOfDatasets(String searchQuery, String[] searchIn, String orderBy, FilterDTO[] filters);
+    long getNumberOfDatasets(String searchKey, String[] searchIn, String orderBy, FilterDTO[] filters);
 
-    List<DataSetLongViewDTO> getSubListOFDataSets(String searchQuery, Long low, Long limit, String[] searchIn, String orderBy, FilterDTO[] filters);
+    List<DataSetLongViewDTO> getSubListOFDataSets(String searchKey, Long low, Long limit, String[] searchIn, String orderBy, FilterDTO[] filters);
 
-    List<FilterDTO> getFilters(String searchQuery, String[] searchIn);
+    List<FilterDTO> getFilters(String searchKey, String[] searchIn);
 
     Long getCountOfFilterValue(String filterUri, String valueUri, String searchKey, String[] searchIn);
 

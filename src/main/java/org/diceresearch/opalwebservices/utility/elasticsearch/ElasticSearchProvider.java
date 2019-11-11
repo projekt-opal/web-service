@@ -13,17 +13,17 @@ import java.util.List;
 @Component
 public class ElasticSearchProvider implements DataProvider {
     @Override
-    public long getNumberOfDatasets(String searchQuery, String[] searchIn, String orderBy, FilterDTO[] filters) {
+    public long getNumberOfDatasets(String searchKey, String[] searchIn, String orderBy, FilterDTO[] filters) {
         return 0; //Todo complete it
     }
 
     @Override
-    public List<DataSetLongViewDTO> getSubListOFDataSets(String searchQuery, Long low, Long limit, String[] searchIn, String orderBy, FilterDTO[] filters) {
+    public List<DataSetLongViewDTO> getSubListOFDataSets(String searchKey, Long low, Long limit, String[] searchIn, String orderBy, FilterDTO[] filters) {
         return null; //Todo complete it
     }
 
     @Override
-    public List<FilterDTO> getFilters(String searchQuery, String[] searchIn) {
+    public List<FilterDTO> getFilters(String searchKey, String[] searchIn) {
         return null; //Todo complete it
     }
 

@@ -35,12 +35,12 @@ public class TripleStoreProvider implements DataProvider {
     }
 
     @Override
-    public long getNumberOfDatasets(String searchQuery, String[] searchIn, String orderBy, FilterDTO[] filters) {
+    public long getNumberOfDatasets(String searchKey, String[] searchIn, String orderBy, FilterDTO[] filters) {
         Long num = -1L;
         try {
             ParameterizedSparqlString pss = new ParameterizedSparqlString();
 
-            String filtersString = getSparQLSearchQuery(searchQuery, searchIn, filters);
+            String filtersString = getSparQLSearchQuery(searchKey, searchIn, filters);
 
             String query = "SELECT (COUNT(DISTINCT ?s) AS ?num) WHERE {  GRAPH ?g { " +
                     "?s a dcat:Dataset. " + filtersString +
@@ -59,12 +59,12 @@ public class TripleStoreProvider implements DataProvider {
     }
 
     @Override
-    public List<DataSetLongViewDTO> getSubListOFDataSets(String searchQuery, Long low, Long limit, String[] searchIn, String orderBy, FilterDTO[] filters) {
+    public List<DataSetLongViewDTO> getSubListOFDataSets(String searchKey, Long low, Long limit, String[] searchIn, String orderBy, FilterDTO[] filters) {
         List<DataSetLongViewDTO> ret = new ArrayList<>();
         try {
             ParameterizedSparqlString pss = new ParameterizedSparqlString();
 
-            String filtersString = getSparQLSearchQuery(searchQuery, searchIn, filters);
+            String filtersString = getSparQLSearchQuery(searchKey, searchIn, filters);
 
             String query = "SELECT DISTINCT ?s WHERE { GRAPH ?g { " +
                     "?s a dcat:Dataset. " + filtersString +
@@ -91,11 +91,15 @@ public class TripleStoreProvider implements DataProvider {
     }
 
     @Override
-    public List<FilterDTO> getFilters(String searchQuery, String[] searchIn) {
+    public List<FilterDTO> getFilters(String searchKey, String[] searchIn) {
         List<FilterDTO> ret = new ArrayList<>();
         ret.add(getThemeValues());
-        ret.add(getPublisherValues(searchQuery, searchIn));
-        ret.add(getLicenseFilterValues(searchQuery, searchIn));
+        FilterDTO publishers = getPublisherValues(searchKey, searchIn);
+        if(publishers.getValues().size() > 0)
+            ret.add(publishers);
+        FilterDTO licenses = getLicenseFilterValues(searchKey, searchIn);
+        if(licenses.getValues().size() > 0)
+            ret.add(licenses);
         return ret;
     }
 
@@ -128,7 +132,7 @@ public class TripleStoreProvider implements DataProvider {
                 .setTitle("Publisher")
                 .setValues(new ArrayList<>());
 
-        String filterOptions = getSearchFiltersString(searchQuery, searchIn);
+        String filterOptions = getSparQLSearchQuery(searchQuery, searchIn, null);
         ParameterizedSparqlString pss = new ParameterizedSparqlString("" +
                 "PREFIX dcat: <http://www.w3.org/ns/dcat#> " +
                 "PREFIX dct: <http://purl.org/dc/terms/> " +
@@ -161,32 +165,41 @@ public class TripleStoreProvider implements DataProvider {
         return filterDTO;
     }
 
-    private FilterDTO getLicenseFilterValues(String searchQuery, String[] searchIn) {
+    private FilterDTO getLicenseFilterValues(String searchKey, String[] searchIn) {
         FilterDTO filterDTO = new FilterDTO()
                 .setUri("http://purl.org/dc/terms/license")
                 .setTitle("License")
                 .setValues(new ArrayList<>());
 
-        String filterOptions = getSearchFiltersString(searchQuery, searchIn);
+        String filterOptions = getSparQLSearchQuery(searchKey, searchIn, null);
         ParameterizedSparqlString pss = new ParameterizedSparqlString("" +
                 "PREFIX dcat: <http://www.w3.org/ns/dcat#> " +
                 "PREFIX dct: <http://purl.org/dc/terms/> " +
                 "select ?license ?num " +
                 "from <http://projekt-opal.de> " +
-                "WHERE { " +
-                " { " +
-                " select ?license (COUNT(?license) AS ?num) " +
-                " WHERE { " +
-                " ?s a dcat:Dataset. " +
+                "WHERE {  " +
+                  "{  " +
+                    "select ?license (COUNT(?license) AS ?num)  " +
+                    "WHERE {  " +
+                      "?s a dcat:Dataset. " +
                 filterOptions +
-                " ?s dcat:distribution ?dist. " +
-                " ?dist dct:license ?license. " +
-                " } " +
-                " group by ?license " +
-                " } " +
-                " } " +
+                      "?s dcat:distribution ?dist. " +
+                      "?dist dct:license ?license. " +
+                    "}  group by ?license " +
+                  "} " +
+                 "UNION " +
+                  "{ " +
+                    "select ?license (COUNT(?license) AS ?num) " +
+                    "WHERE " +
+                    "{ " +
+                       "?s a dcat:Dataset. " +
+                filterOptions +
+                       "?s dct:license ?license. " +
+                    "}  group by ?license " +
+                  "} " +
+                "} " +
                 "ORDER BY DESC(?num) " +
-                "LIMIT 10 ");
+                "LIMIT 10");
 
         try {
             logger.info(pss.toString());
@@ -200,20 +213,6 @@ public class TripleStoreProvider implements DataProvider {
             logger.error("", ex);
         }
         return filterDTO;
-    }
-
-    private String getSearchFiltersString(String searchQuery, String[] searchIn) {
-        String ret = "";
-        if (searchIn == null || searchIn.length == 0)
-            return ret;
-        if (contains(searchIn, "title"))
-            ret += " ?s dct:title ?title. " +
-                    " FILTER (CONTAINS(?title, " + searchQuery + " )). ";
-        if (contains(searchIn, "description"))
-            ret += " ?s dct:description ?description. " +
-                    " FILTER (CONTAINS(?description, " + searchQuery + " )). ";
-        //todo keywords
-        return ret;
     }
 
     private boolean contains(String[] searchIn, String s) {
@@ -234,32 +233,32 @@ public class TripleStoreProvider implements DataProvider {
         return modelToDataSetMapper.toDataSetDTO(model);
     }
 
-    private String getSparQLSearchQuery(String searchQuery, String[] searchIn, FilterDTO[] filters) {
+    private String getSparQLSearchQuery(String searchKey, String[] searchIn, FilterDTO[] filters) {
         StringBuilder filtersString = new StringBuilder();
-        if (searchQuery.length() > 0) {
+        if (searchKey.length() > 0) {
             if (searchIn == null || searchIn.length == 0)
                 filtersString
                         .append("?s ?p ?o. ")
                         .append("FILTER(isLiteral(?o)).  ")
                         .append("FILTER CONTAINS (STR(?o),\"")
-                        .append(searchQuery)
+                        .append(searchKey)
                         .append("\"). ");
             else {
                 ArrayList<String> filterValues = new ArrayList<>();
                 if (Arrays.asList(searchIn).contains("title")) {
                     filtersString
                             .append("?s dct:title ?title. ");
-                    filterValues.add("CONTAINS (STR(?title),\"" + searchQuery + "\") ");
+                    filterValues.add("CONTAINS (STR(?title),\"" + searchKey + "\") ");
                 }
                 if (Arrays.asList(searchIn).contains("description")) {
                     filtersString
                             .append("?s dct:description ?description. ");
-                    filterValues.add("CONTAINS (STR(?description),\"" + searchQuery + "\") ");
+                    filterValues.add("CONTAINS (STR(?description),\"" + searchKey + "\") ");
                 }
                 if (Arrays.asList(searchIn).contains("keyword")) {
                     filtersString
                             .append("?s dcat:keyword ?keyword. ");
-                    filterValues.add("CONTAINS (STR(?keyword),\"" + searchQuery + "\") ");
+                    filterValues.add("CONTAINS (STR(?keyword),\"" + searchKey + "\") ");
                 }
                 filtersString.append("FILTER ( ").append(filterValues.get(0));
                 for (int i = 1; i < filterValues.size(); i++)
