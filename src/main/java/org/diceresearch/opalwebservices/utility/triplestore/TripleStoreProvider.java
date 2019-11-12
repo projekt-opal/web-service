@@ -95,10 +95,10 @@ public class TripleStoreProvider implements DataProvider {
         List<FilterDTO> ret = new ArrayList<>();
         ret.add(getThemeValues());
         FilterDTO publishers = getPublisherValues(searchKey, searchIn, null);
-        if(publishers.getValues().size() > 0)
+        if (publishers.getValues().size() > 0)
             ret.add(publishers);
         FilterDTO licenses = getLicenseFilterValues(searchKey, searchIn, null);
-        if(licenses.getValues().size() > 0)
+        if (licenses.getValues().size() > 0)
             ret.add(licenses);
         return ret;
     }
@@ -179,27 +179,27 @@ public class TripleStoreProvider implements DataProvider {
                 "select ?license ?num " +
                 "from <http://projekt-opal.de> " +
                 "WHERE { " +
-                  "{ " +
-                    "select ?license (COUNT(?license) AS ?num) " +
-                    "WHERE { " +
-                      "?s a dcat:Dataset. " +
+                "{ " +
+                "select ?license (COUNT(?license) AS ?num) " +
+                "WHERE { " +
+                "?s a dcat:Dataset. " +
                 filterOptions +
-                      "?s dcat:distribution ?dist. " +
-                      "?dist dct:license ?license. " +
+                "?s dcat:distribution ?dist. " +
+                "?dist dct:license ?license. " +
                 (filterText != null ? "FILTER(CONTAINS(STR(?license), \"" + filterText + "\"))" : "") +
-                    "}  group by ?license " +
-                  "} " +
-                 "UNION " +
-                  "{ " +
-                    "select ?license (COUNT(?license) AS ?num) " +
-                    "WHERE " +
-                    "{ " +
-                       "?s a dcat:Dataset. " +
+                "}  group by ?license " +
+                "} " +
+                "UNION " +
+                "{ " +
+                "select ?license (COUNT(?license) AS ?num) " +
+                "WHERE " +
+                "{ " +
+                "?s a dcat:Dataset. " +
                 filterOptions +
-                       "?s dct:license ?license. " +
-                (filterText != null ? "FILTER(CONTAINS(STR(?license), \"" + filterText + "\"))" : "")+
-                    "}  group by ?license " +
-                  "} " +
+                "?s dct:license ?license. " +
+                (filterText != null ? "FILTER(CONTAINS(STR(?license), \"" + filterText + "\"))" : "") +
+                "}  group by ?license " +
+                "} " +
                 "} " +
                 "ORDER BY DESC(?num) " +
                 "LIMIT 10");
@@ -227,9 +227,9 @@ public class TripleStoreProvider implements DataProvider {
                 "select (COUNT(?s) AS ?num) " +
                 "from <http://projekt-opal.de> " +
                 "WHERE { " +
-                    "?s a dcat:Dataset. " +
-                    filterOptions +
-                    "FILTER(EXISTS{?s dcat:theme ?theme.}) " +
+                "?s a dcat:Dataset. " +
+                filterOptions +
+                "FILTER(EXISTS{?s dcat:theme ?theme.}) " +
                 "}");
         pss.setParam("?theme", ResourceFactory.createResource(valueUri));
 
@@ -297,18 +297,31 @@ public class TripleStoreProvider implements DataProvider {
                 String key = filterDTO.getUri();
                 List<FilterValueDTO> values = filterDTO.getValues();
                 if (values.size() == 1) {
-                    if (values.get(0).getUri().startsWith("http://"))
-                        filtersString.append(" ?s <").append(key).append("> <").append(values.get(0).getUri()).append("> .");
-                    else
-                        filtersString.append(" ?s <").append(key).append("> \"").append(values.get(0).getUri()).append("\" .");
-                } else if (values.size() > 1) {
-                    filtersString.append("VALUES (?value) {  ");
-                    for (FilterValueDTO val : values)
-                        if (val.getUri().startsWith("http://"))
-                            filtersString.append(" ( <").append(val.getUri()).append("> )");
+                    if (values.get(0).getUri().matches("^[a-zA-Z0-9]+:\\/\\/.*")) {//if it is a url
+                        if (filterDTO.getTitle().toLowerCase().equals("license"))
+                            filtersString
+                                    .append("?s dcat:distribution ?dist1. FILTER(EXISTS{?s <")
+                                    .append(key).append("> <").append(values.get(0).getUri()).append("> } ||  EXISTS{?dist1 <)")
+                                    .append(key).append("> <").append(values.get(0).getUri()).append(">}). ");
                         else
-                            filtersString.append(" ( \"").append(val.getUri()).append("\" )");
-                    filtersString.append("} ?s <").append(key).append("> ?value.");
+                            filtersString.append("FILTER(EXISTS{?s <").append(key).append("> <").append(values.get(0).getUri()).append(">}). ");
+                    } else {
+                        if (filterDTO.getTitle().toLowerCase().equals("license"))
+                            filtersString
+                                    .append("?s dcat:distribution ?dist1. FILTER(EXISTS{?s <")
+                                    .append(key).append("> \"").append(values.get(0).getUri()).append("\" } ||  EXISTS{?dist1 <)")
+                                    .append(key).append("> \"").append(values.get(0).getUri()).append("\"}). ");
+                        else
+                            filtersString.append("FILTER(EXISTS{?s <").append(key).append("> \"").append(values.get(0).getUri()).append("\" }). ");
+                    }
+                } else if (values.size() > 1) {
+                    filtersString.append("VALUES (?value) { ");
+                    for (FilterValueDTO val : values)
+                        if (val.getUri().matches("^[a-zA-Z0-9]+:\\/\\/.*"))//if it is a url
+                            filtersString.append(" ( <").append(val.getUri()).append("> ) ");
+                        else
+                            filtersString.append(" ( \"").append(val.getUri()).append("\" ) ");
+                    filtersString.append("} ?s <").append(key).append("> ?value. ");
                 }
             }
         }
