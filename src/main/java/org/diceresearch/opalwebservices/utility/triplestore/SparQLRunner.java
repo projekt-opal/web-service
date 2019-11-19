@@ -1,13 +1,6 @@
 package org.diceresearch.opalwebservices.utility.triplestore;
 
 import org.aksw.commons.util.Pair;
-import org.aksw.jena_sparql_api.http.QueryExecutionFactoryHttp;
-import org.aksw.jena_sparql_api.retry.core.QueryExecutionFactoryRetry;
-import org.apache.http.auth.AuthScope;
-import org.apache.http.auth.Credentials;
-import org.apache.http.auth.UsernamePasswordCredentials;
-import org.apache.http.client.CredentialsProvider;
-import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QuerySolution;
@@ -16,48 +9,30 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.List;
 
-
+@Profile(value = {"triplestore", "test-triplestore", "default"})
 @Service
-public class SparQLRunner implements CredentialsProvider {
+public class SparQLRunner {
 
     private static final Logger logger = LoggerFactory.getLogger(SparQLRunner.class);
 
-    private org.apache.http.auth.Credentials credentials;
-    private org.aksw.jena_sparql_api.core.QueryExecutionFactory qef;
+    private final QueryExecutionFactoryProvider queryExecutionFactoryProvider;
 
-    @Value(value = "${info.opal.tripleStore.url}")
-    private String url;
-    @Value(value = "${info.opal.tripleStore.username}")
-    private String username;
-    @Value(value = "${info.opal.tripleStore.password}")
-    private String password;
-
-//    public SparQLRunner() {
-//        initialQueryExecutionFactory();
-//    }
-
-    @PostConstruct
-    public void initialQueryExecutionFactory() {
-        credentials = new UsernamePasswordCredentials(username, password);
-
-        HttpClientBuilder clientBuilder = HttpClientBuilder.create();
-        clientBuilder.setDefaultCredentialsProvider(this);
-        org.apache.http.impl.client.CloseableHttpClient client = clientBuilder.build();
-
-        qef = new QueryExecutionFactoryHttp(url,
-                new org.apache.jena.sparql.core.DatasetDescription(), client);
-        qef = new QueryExecutionFactoryRetry(qef, 5, 1000);
+    @Autowired
+    public SparQLRunner(QueryExecutionFactoryProvider queryExecutionFactoryProvider) {
+        this.queryExecutionFactoryProvider = queryExecutionFactoryProvider;
     }
 
+
     public Long execSelectCount(Query query) throws Exception {
-        try (QueryExecution queryExecution = qef.createQueryExecution(query)) {
+        try (QueryExecution queryExecution =
+                     queryExecutionFactoryProvider.getQef().createQueryExecution(query)) {
             ResultSet resultSet = queryExecution.execSelect();
             if (resultSet != null && resultSet.hasNext()) {
                 QuerySolution querySolution = resultSet.nextSolution();
@@ -70,7 +45,8 @@ public class SparQLRunner implements CredentialsProvider {
 
 
     public List<Resource> execSelect(Query query, String resourceVariable) throws Exception {
-        try (QueryExecution queryExecution = qef.createQueryExecution(query)) {
+        try (QueryExecution queryExecution =
+                queryExecutionFactoryProvider.getQef().createQueryExecution(query)) {
             ResultSet resultSet = queryExecution.execSelect();
             if (resultSet != null) {
                 List<Resource> ret = new ArrayList<>();
@@ -89,7 +65,8 @@ public class SparQLRunner implements CredentialsProvider {
     }
 
     public List<Pair<Resource, Integer>> execSelectReturnPair(Query query, String resourceVariable, String num) throws Exception {
-            try (QueryExecution queryExecution = qef.createQueryExecution(query)) {
+            try (QueryExecution queryExecution =
+                    queryExecutionFactoryProvider.getQef().createQueryExecution(query)) {
                 ResultSet resultSet = queryExecution.execSelect();
                 if (resultSet != null) {
                     List<Pair<Resource, Integer>> ret = new ArrayList<>();
@@ -110,24 +87,12 @@ public class SparQLRunner implements CredentialsProvider {
 
     public Model executeConstruct(Query query) {
         Model model;
-        try (QueryExecution queryExecution = qef.createQueryExecution(query)) {
+        try (QueryExecution queryExecution =
+                queryExecutionFactoryProvider.getQef().createQueryExecution(query)) {
             model = queryExecution.execConstruct();
         }
         return model;
     }
 
-    @Override
-    public void setCredentials(AuthScope authScope, Credentials credentials) {
 
-    }
-
-    @Override
-    public Credentials getCredentials(AuthScope authScope) {
-        return credentials;
-    }
-
-    @Override
-    public void clear() {
-
-    }
 }

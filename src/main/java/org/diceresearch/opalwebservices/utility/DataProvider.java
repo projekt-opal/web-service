@@ -3,7 +3,6 @@ package org.diceresearch.opalwebservices.utility;
 import org.diceresearch.opalwebservices.model.dto.DataSetDTO;
 import org.diceresearch.opalwebservices.model.dto.DataSetLongViewDTO;
 import org.diceresearch.opalwebservices.model.dto.FilterDTO;
-import org.diceresearch.opalwebservices.model.dto.FilterValueDTO;
 import org.springframework.stereotype.Component;
 
 import java.util.List;

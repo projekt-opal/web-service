@@ -18,7 +18,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-@Profile(value = {"triplestore", "default"})
+@Profile(value = {"triplestore", "test-triplestore", "default"})
 @Component
 public class TripleStoreProvider implements DataProvider {
 
@@ -42,9 +42,11 @@ public class TripleStoreProvider implements DataProvider {
 
             String filtersString = getSparQLSearchQuery(searchKey, searchIn, filters);
 
-            String query = "SELECT (COUNT(DISTINCT ?s) AS ?num) WHERE {  GRAPH ?g { " +
-                    "?s a dcat:Dataset. " + filtersString +
-                    "} }";
+            String query = "SELECT (COUNT(DISTINCT ?s) AS ?num) WHERE { " +
+                    " GRAPH ?g { " +
+                       "?s a dcat:Dataset. " + filtersString +
+                       "} " +
+                    "}";
 
             pss.setCommandText(query);
             pss.setNsPrefix("dcat", "http://www.w3.org/ns/dcat#");
