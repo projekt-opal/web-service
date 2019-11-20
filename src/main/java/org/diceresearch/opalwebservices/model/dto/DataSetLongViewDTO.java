@@ -11,7 +11,6 @@ public class DataSetLongViewDTO {
     private List<String> keywords;
     private String fileType;
     private String overallRating;
-    private String catalog;
     private PublisherDTO publisherDTO;
 
 
@@ -19,7 +18,7 @@ public class DataSetLongViewDTO {
     }
 
     public DataSetLongViewDTO(String uri, String title, String description, String issueDate, List<String> theme,
-                              List<String> keywords, String fileType, String overallRating, String catalog, PublisherDTO publisherDTO) {
+                              List<String> keywords, String fileType, String overallRating, PublisherDTO publisherDTO) {
         this.uri = uri;
         this.title = title;
         this.description = description;
@@ -28,7 +27,6 @@ public class DataSetLongViewDTO {
         this.keywords = keywords;
         this.fileType = fileType;
         this.overallRating = overallRating;
-        this.catalog = catalog;
         this.publisherDTO = publisherDTO;
     }
 
@@ -92,15 +90,6 @@ public class DataSetLongViewDTO {
 
     public DataSetLongViewDTO setOverallRating(String overallRating) {
         this.overallRating = overallRating;
-        return this;
-    }
-
-    public String getCatalog() {
-        return catalog;
-    }
-
-    public DataSetLongViewDTO setCatalog(String catalog) {
-        this.catalog = catalog;
         return this;
     }
 

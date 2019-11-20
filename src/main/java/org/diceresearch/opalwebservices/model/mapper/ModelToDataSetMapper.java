@@ -18,7 +18,7 @@ import java.util.Random;
 public abstract class ModelToDataSetMapper {
     private static final Logger logger = LoggerFactory.getLogger(ModelToDataSetMapper.class);
 
-    public DataSetLongViewDTO toDataSetLongViewDTO(Model model, Resource catalog) {
+    public DataSetLongViewDTO toDataSetLongViewDTO(Model model) {
         try {
             String uri = getUri(model);
             String title = getTitle(model);
@@ -38,7 +38,6 @@ public abstract class ModelToDataSetMapper {
                     .setKeywords(keywords)
                     .setFileType(fileType)
                     .setOverallRating(overAllRating)
-                    .setCatalog(catalog.getURI())
                     .setPublisherDTO(new PublisherDTO("publisher name", "publisher uri"));
             return dataSetLongViewDTO;
         } catch (Exception e) {

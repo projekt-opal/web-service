@@ -81,8 +81,7 @@ public class TripleStoreProvider implements DataProvider {
 
             dataSets.forEach(dataSet -> {
                 Model model = getGraphOfDataSet(dataSet);
-                Resource catalog = getCatalog(dataSet);
-                DataSetLongViewDTO dataSetLongViewDTO = modelToDataSetMapper.toDataSetLongViewDTO(model, catalog);
+                DataSetLongViewDTO dataSetLongViewDTO = modelToDataSetMapper.toDataSetLongViewDTO(model);
                 ret.add(dataSetLongViewDTO);
             });
 
