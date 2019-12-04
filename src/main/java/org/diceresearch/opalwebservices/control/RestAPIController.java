@@ -7,9 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @RestController
 public class RestAPIController {
@@ -28,23 +26,23 @@ public class RestAPIController {
     public Long getNumberOFDataSets(
             @RequestParam(name = "searchKey", required = false, defaultValue = "") String searchKey,
             @RequestParam(name = "searchIn", required = false) String[] searchIn,
-            @RequestParam(name = "orderBy", required = false) String orderBy, // TODO: 26.02.19 if quality metrics can be set then we need to have asc, des
-            @RequestBody(required = false) FilterDTO[] filters
+            @RequestBody(required = false) SearchDTO searchDTO
     ) {
-        return provider.getNumberOfDatasets(searchKey, searchIn, orderBy, filters);
+        return provider.getNumberOfDataSets(searchKey, searchIn,
+                searchDTO.getOrderByDTO(),  searchDTO.getFilterDTOS());
     }
 
     @CrossOrigin
     @PostMapping("/dataSets/getSubList")
-    public List<DataSetLongViewDTO> getSubListOFDataSets(
+    public List<DataSetLongViewDTO> getSubListOfDataSets(
             @RequestParam(name = "searchKey", required = false, defaultValue = "") String searchKey,
             @RequestParam(name = "searchIn", required = false) String[] searchIn,
-            @RequestParam(name = "orderBy", required = false) String orderBy, // TODO: 26.02.19 if quality metrics can be set then we need to have asc, des
             @RequestParam(name = "low", required = false, defaultValue = "0") Long low,
             @RequestParam(name = "limit", required = false, defaultValue = "10") Long limit,
-            @RequestBody(required = false) FilterDTO[] filters
+            @RequestBody(required = false)  SearchDTO searchDTO
     ) {
-        return provider.getSubListOFDataSets(searchKey, low, limit, searchIn, orderBy, filters);
+        return provider.getSubListOfDataSets(searchKey, low, limit, searchIn,
+                searchDTO.getOrderByDTO(), searchDTO.getFilterDTOS());
     }
 
     @CrossOrigin

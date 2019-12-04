@@ -5,6 +5,7 @@ import org.apache.jena.query.ParameterizedSparqlString;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
+import org.apache.jena.vocabulary.DCAT;
 import org.diceresearch.opalwebservices.model.dto.*;
 import org.diceresearch.opalwebservices.model.mapper.ModelToDataSetMapper;
 import org.diceresearch.opalwebservices.utility.DataProvider;
@@ -35,7 +36,7 @@ public class TripleStoreProvider implements DataProvider {
     }
 
     @Override
-    public long getNumberOfDatasets(String searchKey, String[] searchIn, String orderBy, FilterDTO[] filters) {
+    public long getNumberOfDataSets(String searchKey, String[] searchIn, OrderByDTO orderBy, FilterDTO[] filters) {
         Long num = -1L;
         try {
             ParameterizedSparqlString pss = new ParameterizedSparqlString();
@@ -61,16 +62,18 @@ public class TripleStoreProvider implements DataProvider {
     }
 
     @Override
-    public List<DataSetLongViewDTO> getSubListOFDataSets(String searchKey, Long low, Long limit, String[] searchIn, String orderBy, FilterDTO[] filters) {
+    public List<DataSetLongViewDTO> getSubListOfDataSets(String searchKey, Long low, Long limit, String[] searchIn, OrderByDTO orderBy, FilterDTO[] filters) {
         List<DataSetLongViewDTO> ret = new ArrayList<>();
         try {
             ParameterizedSparqlString pss = new ParameterizedSparqlString();
 
             String filtersString = getSparQLSearchQuery(searchKey, searchIn, filters);
 
-            String query = "SELECT DISTINCT ?s WHERE { GRAPH ?g { " +
+            String query = "SELECT DISTINCT ?s WHERE { " +
+                    "GRAPH ?g { " +
                     "?s a dcat:Dataset. " + filtersString +
-                    "} } OFFSET " + low + " LIMIT " + limit;
+                    "}" +
+                    " } OFFSET " + low + " LIMIT " + limit;
 
             pss.setCommandText(query);
             pss.setNsPrefix("dcat", "http://www.w3.org/ns/dcat#");
@@ -105,8 +108,9 @@ public class TripleStoreProvider implements DataProvider {
     }
 
     private FilterDTO getThemeValues() {
+
         return new FilterDTO()
-                .setUri("http://www.w3.org/ns/dcat#theme")
+                .setUri(DCAT.theme.getURI())
                 .setTitle("Theme")
                 .setValues(Arrays.asList(
                         new FilterValueDTO("http://publications.europa.eu/resource/authority/data-theme/AGRI", "Agriculture, fisheries, forestry and food", "Agriculture, fisheries, forestry and food", -1),

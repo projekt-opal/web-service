@@ -4,10 +4,7 @@ import org.apache.http.HttpHost;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.lucene.search.join.ScoreMode;
-import org.diceresearch.opalwebservices.model.dto.DataSetDTO;
-import org.diceresearch.opalwebservices.model.dto.DataSetLongViewDTO;
-import org.diceresearch.opalwebservices.model.dto.FilterDTO;
-import org.diceresearch.opalwebservices.model.dto.FilterValueDTO;
+import org.diceresearch.opalwebservices.model.dto.*;
 import org.diceresearch.opalwebservices.model.mapper.JsonObjecttoDataSetMapper;
 import org.diceresearch.opalwebservices.utility.DataProvider;
 import org.elasticsearch.action.search.SearchRequest;
@@ -68,7 +65,7 @@ public class ElasticSearchProvider implements DataProvider {
     }
 
     @Override
-    public long getNumberOfDatasets(String searchKey, String[] searchIn, String orderBy, FilterDTO[] filters) {
+    public long getNumberOfDataSets(String searchKey, String[] searchIn, OrderByDTO orderBy, FilterDTO[] filters) {
         Long num = 0L;
         try {
             SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
@@ -153,7 +150,7 @@ public class ElasticSearchProvider implements DataProvider {
     }
 
     @Override
-    public List<DataSetLongViewDTO> getSubListOFDataSets(String searchKey, Long low, Long limit, String[] searchIn, String orderBy, FilterDTO[] filters) {
+    public List<DataSetLongViewDTO> getSubListOfDataSets(String searchKey, Long low, Long limit, String[] searchIn, OrderByDTO orderBy, FilterDTO[] filters) {
         List<DataSetLongViewDTO> ret = new ArrayList<>();
 
         try {
@@ -259,7 +256,7 @@ public class ElasticSearchProvider implements DataProvider {
         filterValueDTOList.add(filterValueDTO);
         FilterDTO filterDTO = new FilterDTO().setUri(filterUri).setValues(filterValueDTOList);
         FilterDTO[] filterDTOS = new FilterDTO[]{filterDTO};
-        return getNumberOfDatasets(searchKey, searchIn, null, filterDTOS);
+        return getNumberOfDataSets(searchKey, searchIn, null, filterDTOS);
     }
 
     @Override

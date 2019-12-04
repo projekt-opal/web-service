@@ -1,9 +1,15 @@
 package org.diceresearch.opalwebservices.model.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+
 public class FilterValueDTO {
+    @JsonFormat(with = JsonFormat.Feature.ACCEPT_CASE_INSENSITIVE_PROPERTIES)
     private String uri;
+    @JsonFormat(with = JsonFormat.Feature.ACCEPT_CASE_INSENSITIVE_PROPERTIES)
     private String value;
+    @JsonFormat(with = JsonFormat.Feature.ACCEPT_CASE_INSENSITIVE_PROPERTIES)
     private String label;
+    @JsonFormat(with = JsonFormat.Feature.ACCEPT_CASE_INSENSITIVE_PROPERTIES)
     private Integer count;
 
     public FilterValueDTO() {
