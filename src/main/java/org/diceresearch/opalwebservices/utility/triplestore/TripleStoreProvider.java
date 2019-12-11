@@ -307,7 +307,7 @@ public class TripleStoreProvider implements DataProvider {
                         if (filterDTO.getTitle().toLowerCase().equals("license"))
                             filtersString
                                     .append("?s dcat:distribution ?dist1. FILTER(EXISTS{?s <")
-                                    .append(key).append("> <").append(values.get(0).getUri()).append("> } ||  EXISTS{?dist1 <)")
+                                    .append(key).append("> <").append(values.get(0).getUri()).append("> } ||  EXISTS{?dist1 <")
                                     .append(key).append("> <").append(values.get(0).getUri()).append(">}). ");
                         else
                             filtersString.append("FILTER(EXISTS{?s <").append(key).append("> <").append(values.get(0).getUri()).append(">}). ");
