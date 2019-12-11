@@ -4,7 +4,7 @@ server:
 info:
   opal:
     tripleStore:
-      url: http://${OPAL_TRIPLESTORE_URL}:3030/mcloud/query
+      url: http://${OPAL_TRIPLESTORE_URL}:3030/opal/query
       username: ${OPAL_TRIPLESTORE_USERNAME}
       password: ${OPAL_TRIPLESTORE_PASSWORD}
 

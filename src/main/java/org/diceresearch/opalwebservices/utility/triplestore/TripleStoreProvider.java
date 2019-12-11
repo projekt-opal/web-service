@@ -46,7 +46,7 @@ public class TripleStoreProvider implements DataProvider {
             String query = "SELECT (COUNT(DISTINCT ?s) AS ?num) WHERE { " +
                     " GRAPH ?g { " +
                        "?s a dcat:Dataset. " + filtersString +
-                       "} " +
+                       " } " +
                     "}";
 
             pss.setCommandText(query);
@@ -70,9 +70,9 @@ public class TripleStoreProvider implements DataProvider {
             String filtersString = getSparQLSearchQuery(searchKey, searchIn, filters);
 
             String query = "SELECT DISTINCT ?s WHERE { " +
-                    "GRAPH ?g { " +
+                    " GRAPH ?g { " +
                     "?s a dcat:Dataset. " + filtersString +
-                    "}" +
+                    " } " +
                     " } OFFSET " + low + " LIMIT " + limit;
 
             pss.setCommandText(query);
@@ -181,31 +181,32 @@ public class TripleStoreProvider implements DataProvider {
         ParameterizedSparqlString pss = new ParameterizedSparqlString("" +
                 "PREFIX dcat: <http://www.w3.org/ns/dcat#> " +
                 "PREFIX dct: <http://purl.org/dc/terms/> " +
-                "select ?license ?num " +
+                "select ?license (COUNT(?license) AS ?num) " +
                 "from <http://projekt-opal.de> " +
                 "WHERE { " +
                 "{ " +
-                "select ?license (COUNT(?license) AS ?num) " +
+                "select distinct ?license ?s " +
                 "WHERE { " +
                 "?s a dcat:Dataset. " +
                 filterOptions +
                 "?s dcat:distribution ?dist. " +
                 "?dist dct:license ?license. " +
                 (filterText != null ? "FILTER(CONTAINS(STR(?license), \"" + filterText + "\"))" : "") +
-                "}  group by ?license " +
+                "}  group by ?license ?s " +
                 "} " +
                 "UNION " +
                 "{ " +
-                "select ?license (COUNT(?license) AS ?num) " +
+                "select distinct ?license ?s " +
                 "WHERE " +
                 "{ " +
                 "?s a dcat:Dataset. " +
                 filterOptions +
                 "?s dct:license ?license. " +
                 (filterText != null ? "FILTER(CONTAINS(STR(?license), \"" + filterText + "\"))" : "") +
-                "}  group by ?license " +
+                "}  group by ?license ?s " +
                 "} " +
                 "} " +
+                "group by ?license " +
                 "ORDER BY DESC(?num) " +
                 "LIMIT 10");
 
@@ -314,7 +315,7 @@ public class TripleStoreProvider implements DataProvider {
                         if (filterDTO.getTitle().toLowerCase().equals("license"))
                             filtersString
                                     .append("?s dcat:distribution ?dist1. FILTER(EXISTS{?s <")
-                                    .append(key).append("> \"").append(values.get(0).getUri()).append("\" } ||  EXISTS{?dist1 <)")
+                                    .append(key).append("> \"").append(values.get(0).getUri()).append("\" } ||  EXISTS{?dist1 <")
                                     .append(key).append("> \"").append(values.get(0).getUri()).append("\"}). ");
                         else
                             filtersString.append("FILTER(EXISTS{?s <").append(key).append("> \"").append(values.get(0).getUri()).append("\" }). ");
@@ -339,10 +340,10 @@ public class TripleStoreProvider implements DataProvider {
                 "CONSTRUCT { " + "?dataSet ?predicate ?object. " +
                 "?object ?p2 ?o2} " +
                 "WHERE { " +
-                "  GRAPH ?g { " +
-                "    ?dataSet ?predicate ?object. " +
-                "    OPTIONAL { ?object ?p2 ?o2 } " +
-                "  }" +
+                " GRAPH ?g { " +
+                    " ?dataSet ?predicate ?object. " +
+                    " OPTIONAL { ?object ?p2 ?o2 } " +
+                 " } " +
                 "}");
 
         pss.setParam("dataSet", dataSet);
