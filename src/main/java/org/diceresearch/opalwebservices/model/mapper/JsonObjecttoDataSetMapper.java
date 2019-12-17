@@ -53,7 +53,8 @@ public abstract class JsonObjecttoDataSetMapper {
             JSONArray propertyArray = dataSet.getJSONArray("publisherInfo");
             for (int i = 0; i < propertyArray.length(); i++) {
                 JSONObject property = propertyArray.getJSONObject(i);
-                publisherDTO.setName(property.getString("name"));
+                if(property.has("name"))
+                    publisherDTO.setName(property.getString("name"));
                 publisherDTO.setUri(property.getString("publisher"));
             }
         }
