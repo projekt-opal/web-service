@@ -1,0 +1,13 @@
+version: "2.4"
+
+services:
+  webservice:
+    container_name: webservice
+    build: .
+    ports:
+    - 8081:8081
+    environment:
+      - OPAL_TRIPLESTORE_URL=${OPAL_TRIPLESTORE_URL}
+      - OPAL_TRIPLESTORE_USERNAME=${OPAL_TRIPLESTORE_USERNAME}
+      - OPAL_TRIPLESTORE_PASSWORD=${OPAL_TRIPLESTORE_PASSWORD}
+
