@@ -1,4 +1,4 @@
-package org.diceresearch.opalwebservices.utility.triplestore;
+package org.dice_research.opal.webservice.utility.triplestore;
 
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.http.QueryExecutionFactoryHttp;

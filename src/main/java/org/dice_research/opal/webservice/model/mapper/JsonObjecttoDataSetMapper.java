@@ -1,7 +1,7 @@
-package org.diceresearch.opalwebservices.model.mapper;
+package org.dice_research.opal.webservice.model.mapper;
 
-import org.diceresearch.opalwebservices.model.dto.DataSetLongViewDTO;
-import org.diceresearch.opalwebservices.model.dto.PublisherDTO;
+import org.dice_research.opal.webservice.model.dto.DataSetLongViewDTO;
+import org.dice_research.opal.webservice.model.dto.PublisherDTO;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.mapstruct.Mapper;

@@ -1,4 +1,4 @@
-package org.diceresearch.opalwebservices.utility.triplestore;
+package org.dice_research.opal.webservice.utility.triplestore;
 
 import org.aksw.commons.util.Pair;
 import org.apache.jena.query.ParameterizedSparqlString;
@@ -6,9 +6,9 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.vocabulary.DCAT;
-import org.diceresearch.opalwebservices.model.dto.*;
-import org.diceresearch.opalwebservices.model.mapper.ModelToDataSetMapper;
-import org.diceresearch.opalwebservices.utility.DataProvider;
+import org.dice_research.opal.webservice.model.dto.*;
+import org.dice_research.opal.webservice.model.mapper.ModelToDataSetMapper;
+import org.dice_research.opal.webservice.utility.DataProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

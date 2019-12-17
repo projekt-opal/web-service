@@ -1,4 +1,4 @@
-package org.diceresearch.opalwebservices.model.dto;
+package org.dice_research.opal.webservice.model.dto;
 
 public class PublisherDTO {
     private String name;

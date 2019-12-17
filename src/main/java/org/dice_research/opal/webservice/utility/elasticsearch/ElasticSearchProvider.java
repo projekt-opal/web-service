@@ -1,12 +1,12 @@
-package org.diceresearch.opalwebservices.utility.elasticsearch;
+package org.dice_research.opal.webservice.utility.elasticsearch;
 
 import org.apache.http.HttpHost;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.lucene.search.join.ScoreMode;
-import org.diceresearch.opalwebservices.model.dto.*;
-import org.diceresearch.opalwebservices.model.mapper.JsonObjecttoDataSetMapper;
-import org.diceresearch.opalwebservices.utility.DataProvider;
+import org.dice_research.opal.webservice.model.dto.*;
+import org.dice_research.opal.webservice.model.mapper.JsonObjecttoDataSetMapper;
+import org.dice_research.opal.webservice.utility.DataProvider;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RequestOptions;

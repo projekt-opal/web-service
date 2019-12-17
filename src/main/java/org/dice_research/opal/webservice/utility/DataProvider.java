@@ -1,9 +1,9 @@
-package org.diceresearch.opalwebservices.utility;
+package org.dice_research.opal.webservice.utility;
 
-import org.diceresearch.opalwebservices.model.dto.DataSetDTO;
-import org.diceresearch.opalwebservices.model.dto.DataSetLongViewDTO;
-import org.diceresearch.opalwebservices.model.dto.FilterDTO;
-import org.diceresearch.opalwebservices.model.dto.OrderByDTO;
+import org.dice_research.opal.webservice.model.dto.DataSetDTO;
+import org.dice_research.opal.webservice.model.dto.DataSetLongViewDTO;
+import org.dice_research.opal.webservice.model.dto.FilterDTO;
+import org.dice_research.opal.webservice.model.dto.OrderByDTO;
 import org.springframework.stereotype.Component;
 
 import java.util.List;

@@ -1,4 +1,4 @@
-package org.diceresearch.opalwebservices.utility.triplestore;
+package org.dice_research.opal.webservice.utility.triplestore;
 
 import org.aksw.commons.util.Pair;
 import org.apache.jena.query.Query;

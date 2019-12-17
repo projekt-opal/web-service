@@ -1,7 +1,7 @@
-package org.diceresearch.opalwebservices.control;
+package org.dice_research.opal.webservice.control;
 
-import org.diceresearch.opalwebservices.model.dto.*;
-import org.diceresearch.opalwebservices.utility.DataProvider;
+import org.dice_research.opal.webservice.model.dto.*;
+import org.dice_research.opal.webservice.utility.DataProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

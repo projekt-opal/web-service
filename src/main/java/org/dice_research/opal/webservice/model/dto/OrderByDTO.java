@@ -1,4 +1,4 @@
-package org.diceresearch.opalwebservices.model.dto;
+package org.dice_research.opal.webservice.model.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 
