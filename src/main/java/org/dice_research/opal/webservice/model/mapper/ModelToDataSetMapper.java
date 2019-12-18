@@ -5,6 +5,7 @@ import org.apache.jena.rdf.model.*;
 import org.apache.jena.vocabulary.DCAT;
 import org.apache.jena.vocabulary.DCTerms;
 import org.apache.jena.vocabulary.RDF;
+import org.dice_research.opal.common.vocabulary.Dqv;
 import org.dice_research.opal.webservice.model.dto.DataSetDTO;
 import org.dice_research.opal.webservice.model.dto.DataSetLongViewDTO;
 import org.dice_research.opal.webservice.model.dto.DistributionDTO;
@@ -57,29 +58,105 @@ public class ModelToDataSetMapper {
 
     public DataSetDTO toDataSetDTO(Model model) {
         try {
-            String uri = getUri(model);
-            String title = getTitle(model);
-            String description = getDescription(model);
-            List<String> theme = getThemeList(model);
-            String issueDate = "2018-12-05";
-            Random r = new Random();
-            String overAllRating = Double.toString(r.nextDouble() * 4 + 1);
-            List<String> keywords = Arrays.asList("key1", "key2");
             DataSetDTO dataSetDTO = new DataSetDTO();
-            dataSetDTO.setUri(uri == null ? title : uri);
-            dataSetDTO.setTitle(title);
-            dataSetDTO.setDescription(description);
-            dataSetDTO.setTheme(theme);
-            dataSetDTO.setIssueDate(issueDate);
-            dataSetDTO.setKeywords(keywords);
-            dataSetDTO.setOverallRating(overAllRating);
-//            dataSetDTO.setDistributionDTOS(Arrays.asList(new DistributionDTO("uri1", "pdf")));
-//            dataSetDTO.setQualityMeasurementDOS(Arrays.asList(new QualityMeasurementDTO("q1", 5)));
+            dataSetDTO.setUri(getUri(model) == null ? getTitle(model) : getUri(model));
+            dataSetDTO.setTitle(getTitle(model));
+            dataSetDTO.setDescription(getDescription(model));
+            dataSetDTO.setTheme(getThemeList(model));
+            dataSetDTO.setIssueDate(getIssueDate(model));
+            dataSetDTO.setKeywords(getKeywords(model));
+//            dataSetDTO.setOverallRating(overAllRating);
+            dataSetDTO.setDistributionDTOS(getDistributions(model));
+            dataSetDTO.setQualityMeasurementDOS(getMeasurements(model));
             return dataSetDTO;
         } catch (Exception e) {
             log.error("Error in ModelToLongViewDTOMapper ", e);
         }
         return null;
+    }
+
+    private List<QualityMeasurementDTO> getMeasurements(Model model) {
+        List<QualityMeasurementDTO> ret = new ArrayList<>();
+        try {
+            NodeIterator nodeIterator = model.listObjectsOfProperty(Dqv.HAS_QUALITY_MEASUREMENT);
+            while (nodeIterator.hasNext()) {
+                try {
+                    List<QualityMeasurementDTO> list = new ArrayList<>();
+                    Resource measurement = nodeIterator.nextNode().asResource();
+                    NodeIterator measurementIterator = model.listObjectsOfProperty(measurement, Dqv.IS_MEASUREMENT_OF);
+                    while (measurementIterator.hasNext()) {
+                        Resource measurementOf = measurementIterator.nextNode().asResource();
+                        list.add(QualityMeasurementDTO.builder().quality(measurementOf.getURI()).value(0).build());
+                    }
+                    NodeIterator measurementValueIterator = model.listObjectsOfProperty(measurement, Dqv.HAS_VALUE);
+                    int i = 0;
+                    while (measurementValueIterator.hasNext()) {
+                        int v = measurementValueIterator.nextNode().asLiteral().getInt();
+                        if (i < list.size()) list.get(i++).setValue(v);
+                    }
+                    ret.addAll(list);
+                } catch (NoSuchElementException e) {
+                    log.error("", e);
+                }
+            }
+        } catch (Exception e) {
+            log.error("", e);
+        }
+        return ret;
+    }
+
+    private List<String> getKeywords(Model model) {
+        Set<String> ret = new HashSet<>();
+        try {
+            NodeIterator nodeIterator = model.listObjectsOfProperty(DCAT.keyword);
+            while (nodeIterator.hasNext()) {
+                try {
+                    ret.add(nodeIterator.nextNode().asLiteral().getString());
+                } catch (NoSuchElementException e) {
+                    log.error("", e);
+                }
+            }
+        } catch (NoSuchElementException e) {
+            log.error("", e);
+        }
+        return new ArrayList<>(ret);
+    }
+
+    private List<DistributionDTO> getDistributions(Model model) {
+        List<DistributionDTO> ret = new ArrayList<>();
+        try {
+            NodeIterator nodeIterator = model.listObjectsOfProperty(DCAT.distribution);
+            while (nodeIterator.hasNext()) {
+                try {
+                    Resource dist = nodeIterator.nextNode().asResource();
+                    NodeIterator downloadUrlIterator = model.listObjectsOfProperty(dist, DCAT.downloadURL);
+                    if (downloadUrlIterator.hasNext()) {
+                        String s = downloadUrlIterator.nextNode().toString();
+                        DistributionDTO distributionDTO = new DistributionDTO();
+                        distributionDTO.setUrl(s);
+                        if (s.matches(".*\\..+")) {
+                            String[] split = s.split("\\.");
+                            String fileType = split[split.length - 1];
+                            distributionDTO.setFileType(fileType);
+                        }
+                        ret.add(distributionDTO);
+                    } else {
+                        NodeIterator accessIterator = model.listObjectsOfProperty(dist, DCAT.accessURL);
+                        if (accessIterator.hasNext()) {
+                            String s = accessIterator.nextNode().toString();
+                            DistributionDTO distributionDTO = new DistributionDTO();
+                            distributionDTO.setUrl(s);
+                            ret.add(distributionDTO);
+                        }
+                    }
+                } catch (NoSuchElementException e) {
+                    log.error("", e);
+                }
+            }
+        } catch (Exception e) {
+            log.error("", e);
+        }
+        return ret;
     }
 
     private String getIssueDate(Model model) {

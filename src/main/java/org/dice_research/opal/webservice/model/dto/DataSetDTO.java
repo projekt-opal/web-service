@@ -13,7 +13,7 @@ public class DataSetDTO {
     private String issueDate;
     private List<String> theme;
     private List<String> keywords;
-    private String overallRating;
+//    private String overallRating;
     @JsonProperty("publisher")
     private PublisherDTO publisherDTO;
     @JsonProperty("distributions")
