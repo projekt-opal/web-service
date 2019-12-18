@@ -29,14 +29,13 @@ public class JsonObjecttoDataSetMapper {
             String modified = getPropertyValue(dataSet, "modified");
             String accrualPeriodicity = getPropertyValue(dataSet, "accrualPeriodicity");
             PublisherDTO pulisherInfo = getPublisherInfo(dataSet);
-            DataSetLongViewDTO dataSetLongViewDTO = new DataSetLongViewDTO()
-                    .setKeywords(keywords)
-                    .setTheme(themes)
-                    .setTitle(title)
-                    .setDescription(description)
-                    .setIssueDate(issued)
-                    .setUri(uri)
-                    .setPublisherDTO(pulisherInfo);
+            DataSetLongViewDTO dataSetLongViewDTO = new DataSetLongViewDTO();
+            dataSetLongViewDTO.setTheme(themes);
+            dataSetLongViewDTO.setTitle(title);
+            dataSetLongViewDTO.setDescription(description);
+            dataSetLongViewDTO.setIssueDate(issued);
+            dataSetLongViewDTO.setUri(uri);
+//            dataSetLongViewDTO.setPublisherDTO(pulisherInfo);
             return dataSetLongViewDTO;
 
         } catch (Exception e) {

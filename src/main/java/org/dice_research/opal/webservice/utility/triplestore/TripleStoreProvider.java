@@ -163,10 +163,10 @@ public class TripleStoreProvider implements DataProvider {
 
     private FilterDTO getThemeValues() {
 
-        return new FilterDTO()
-                .setUri(DCAT.theme.getURI())
-                .setTitle("Theme")
-                .setValues(Arrays.asList(
+        return FilterDTO.builder()
+                .uri(DCAT.theme.getURI())
+                .title("Theme")
+                .values(Arrays.asList(
                         new FilterValueDTO("http://publications.europa.eu/resource/authority/data-theme/AGRI", "Agriculture, fisheries, forestry and food", "Agriculture, fisheries, forestry and food", -1),
                         new FilterValueDTO("http://publications.europa.eu/resource/authority/data-theme/EDUC", "Education, culture and sport", "Education, culture and sport", -1),
                         new FilterValueDTO("http://publications.europa.eu/resource/authority/data-theme/ENVI", "Environment", "Environment", -1),
@@ -181,15 +181,15 @@ public class TripleStoreProvider implements DataProvider {
                         new FilterValueDTO("http://publications.europa.eu/resource/authority/data-theme/JUST", "Justice, legal system and public safety", "Justice, legal system and public safety", -1),
                         new FilterValueDTO("http://publications.europa.eu/resource/authority/data-theme/INTR", "International issues", "International issues", -1),
                         new FilterValueDTO("http://publications.europa.eu/resource/authority/data-theme/OP_DATPRO", "Provisional data", "Provisional data", -1)
-                ));
+                )).build();
 
     }
 
     private FilterDTO getPublisherValues(String searchQuery, String[] searchIn, String filterText) {
-        FilterDTO filterDTO = new FilterDTO()
-                .setUri("http://purl.org/dc/terms/publisher")
-                .setTitle("Publisher")
-                .setValues(new ArrayList<>());
+        FilterDTO filterDTO = FilterDTO.builder()
+                .uri("http://purl.org/dc/terms/publisher")
+                .title("Publisher")
+                .values(new ArrayList<>()).build();
 
         String filterOptions = getSparQLSearchQuery(searchQuery, searchIn, null, "?s");
         ParameterizedSparqlString pss = new ParameterizedSparqlString("" +
@@ -226,10 +226,10 @@ public class TripleStoreProvider implements DataProvider {
     }
 
     private FilterDTO getLicenseFilterValues(String searchKey, String[] searchIn, String filterText) {
-        FilterDTO filterDTO = new FilterDTO()
-                .setUri("http://purl.org/dc/terms/license")
-                .setTitle("License")
-                .setValues(new ArrayList<>());
+        FilterDTO filterDTO = FilterDTO.builder()
+                .uri("http://purl.org/dc/terms/license")
+                .title("License")
+                .values(new ArrayList<>()).build();
 
         String filterOptions = getSparQLSearchQuery(searchKey, searchIn, null, "?s");
         ParameterizedSparqlString pss = new ParameterizedSparqlString("" +

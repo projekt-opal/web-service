@@ -209,10 +209,10 @@ public class ElasticSearchProvider implements DataProvider {
     }
 
     private FilterDTO getFilterValues(String uri, String title, String fieldname, String path, DisMaxQueryBuilder searchConstraintQuery, boolean nested) {
-        FilterDTO filterDTO = new FilterDTO()
-                .setUri(uri)
-                .setTitle(title)
-                .setValues(new ArrayList<>());
+        FilterDTO filterDTO = FilterDTO.builder()
+                .uri(uri)
+                .title(title)
+                .values(new ArrayList<>()).build();
         try {
             SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
             searchSourceBuilder.query(searchConstraintQuery);
@@ -251,10 +251,11 @@ public class ElasticSearchProvider implements DataProvider {
 
     @Override
     public Long getCountOfFilterValue(String filterUri, String valueUri, String searchKey, String[] searchIn) {
-        FilterValueDTO filterValueDTO = new FilterValueDTO().setUri(valueUri);
+        FilterValueDTO filterValueDTO = new FilterValueDTO();
+        filterValueDTO.setUri(valueUri);
         List<FilterValueDTO> filterValueDTOList = new ArrayList<FilterValueDTO>();
         filterValueDTOList.add(filterValueDTO);
-        FilterDTO filterDTO = new FilterDTO().setUri(filterUri).setValues(filterValueDTOList);
+        FilterDTO filterDTO = FilterDTO.builder().uri(filterUri).values(filterValueDTOList).build();
         FilterDTO[] filterDTOS = new FilterDTO[]{filterDTO};
         return getNumberOfDataSets(searchKey, searchIn, null, filterDTOS);
     }
@@ -266,10 +267,10 @@ public class ElasticSearchProvider implements DataProvider {
 
     @Override
     public FilterDTO getTopFilterOptions(String filterType, String searchKey, String[] searchIn, String filterText) {
-        return new FilterDTO()
-                .setUri("http://www.w3.org/ns/dcat#theme")
-                .setTitle("Theme")
-                .setValues(Arrays.asList(
+        return FilterDTO.builder()
+                .uri("http://www.w3.org/ns/dcat#theme")
+                .title("Theme")
+                .values(Arrays.asList(
                         new FilterValueDTO("http://publications.europa.eu/resource/authority/data-theme/AGRI", "Agriculture, fisheries, forestry and food", "Agriculture, fisheries, forestry and food", -1),
                         new FilterValueDTO("http://publications.europa.eu/resource/authority/data-theme/EDUC", "Education, culture and sport", "Education, culture and sport", -1),
                         new FilterValueDTO("http://publications.europa.eu/resource/authority/data-theme/ENVI", "Environment", "Environment", -1),
@@ -284,7 +285,7 @@ public class ElasticSearchProvider implements DataProvider {
                         new FilterValueDTO("http://publications.europa.eu/resource/authority/data-theme/JUST", "Justice, legal system and public safety", "Justice, legal system and public safety", -1),
                         new FilterValueDTO("http://publications.europa.eu/resource/authority/data-theme/INTR", "International issues", "International issues", -1),
                         new FilterValueDTO("http://publications.europa.eu/resource/authority/data-theme/OP_DATPRO", "Provisional data", "Provisional data", -1)
-                ));
+                )).build();
     }
 
     private HashMap<String, String> returnFieldDetails(String fieldToSearch) {
