@@ -5,17 +5,17 @@ import org.apache.jena.vocabulary.DCAT;
 import org.apache.jena.vocabulary.DCTerms;
 import org.apache.jena.vocabulary.RDF;
 import org.dice_research.opal.webservice.model.dto.*;
-import org.mapstruct.Mapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
-@Mapper(componentModel = "spring")
-public abstract class ModelToDataSetMapper {
+@Component
+public class ModelToDataSetMapper {
     private static final Logger logger = LoggerFactory.getLogger(ModelToDataSetMapper.class);
 
     public DataSetLongViewDTO toDataSetLongViewDTO(Model model) {

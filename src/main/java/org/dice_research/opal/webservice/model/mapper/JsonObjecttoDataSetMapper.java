@@ -4,20 +4,19 @@ import org.dice_research.opal.webservice.model.dto.DataSetLongViewDTO;
 import org.dice_research.opal.webservice.model.dto.PublisherDTO;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.mapstruct.Mapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
 
-@Mapper(componentModel = "spring")
-public abstract class JsonObjecttoDataSetMapper {
+@Component
+public class JsonObjecttoDataSetMapper {
     private static final Logger logger = LoggerFactory.getLogger(JsonObjecttoDataSetMapper.class);
 
     public DataSetLongViewDTO toDataSetLongViewDTO(JSONObject dataSet) {
         try {
-
             String uri = getPropertyValue(dataSet, "URL");
             String description = getPropertyValue(dataSet, "description");
             String title = getPropertyValue(dataSet, "title");
