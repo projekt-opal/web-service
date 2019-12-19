@@ -211,6 +211,8 @@ public class ElasticSearchProvider implements DataProvider {
         FilterDTO filterDTO = FilterDTO.builder()
                 .uri(uri)
                 .title(title)
+                .externalLink(true)
+                .isTypeStatic(title.equals("Theme"))
                 .values(new ArrayList<>()).build();
         try {
             SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
@@ -265,6 +267,7 @@ public class ElasticSearchProvider implements DataProvider {
 
     @Override
     public FilterDTO getTopFilterOptions(String filterType, String searchKey, String[] searchIn, String filterText) {
+        // TODO: 12/19/19 It is not complete
         return FilterDTO.builder()
                 .uri("http://www.w3.org/ns/dcat#theme")
                 .title("Theme")

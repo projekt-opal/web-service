@@ -166,6 +166,8 @@ public class TripleStoreProvider implements DataProvider {
         return FilterDTO.builder()
                 .uri(DCAT.theme.getURI())
                 .title("Theme")
+                .externalLink(true)
+                .isTypeStatic(true)
                 .values(Arrays.asList(
                         new FilterValueDTO("http://publications.europa.eu/resource/authority/data-theme/AGRI", "Agriculture, fisheries, forestry and food", "Agriculture, fisheries, forestry and food", -1),
                         new FilterValueDTO("http://publications.europa.eu/resource/authority/data-theme/EDUC", "Education, culture and sport", "Education, culture and sport", -1),
@@ -189,6 +191,8 @@ public class TripleStoreProvider implements DataProvider {
         FilterDTO filterDTO = FilterDTO.builder()
                 .uri("http://purl.org/dc/terms/publisher")
                 .title("Publisher")
+                .externalLink(true)
+                .isTypeStatic(false)
                 .values(new ArrayList<>()).build();
 
         String filterOptions = getSparQLSearchQuery(searchQuery, searchIn, null, "?s");
@@ -229,6 +233,8 @@ public class TripleStoreProvider implements DataProvider {
         FilterDTO filterDTO = FilterDTO.builder()
                 .uri("http://purl.org/dc/terms/license")
                 .title("License")
+                .externalLink(true)
+                .isTypeStatic(false)
                 .values(new ArrayList<>()).build();
 
         String filterOptions = getSparQLSearchQuery(searchKey, searchIn, null, "?s");
