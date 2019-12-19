@@ -102,10 +102,9 @@ public class ElasticSearchProvider implements DataProvider {
             DisMaxQueryBuilder disMaxQueryBuilder = new DisMaxQueryBuilder();
             Resource filterField = ResourceFactory.createResource(filters[k].getUri());
             String filterFiledName = filterField.getLocalName();
-            if(filterField.getLocalName().equals("theme")){
+            if (filterField.getLocalName().equals("theme")) {
                 filterFiledName = "prefLabel";
-            }
-            else if (filterField.getLocalName().equals("publisher")){
+            } else if (filterField.getLocalName().equals("publisher")) {
                 filterFiledName = "name";
             }
             HashMap<String, String> fieldDetails = returnFieldDetails(filterFiledName);
@@ -134,14 +133,14 @@ public class ElasticSearchProvider implements DataProvider {
         if (Boolean.valueOf(fieldDetails.get("nested"))) {
             if (fieldDetails.get("type").equals("keyword")) {
                 disMaxQueryBuilder.add(QueryBuilders.nestedQuery(fieldDetails.get("parent"), QueryBuilders.termQuery(fieldDetails.get("parent") + "." +
-                        fieldToSearch+".raw", searchKey), ScoreMode.None));
+                        fieldToSearch + ".raw", searchKey), ScoreMode.None));
             } else {
                 disMaxQueryBuilder.add(QueryBuilders.nestedQuery(fieldDetails.get("parent"), QueryBuilders.matchQuery(fieldDetails.get("parent") + "." +
-                        fieldToSearch+".raw", searchKey), ScoreMode.None));
+                        fieldToSearch + ".raw", searchKey), ScoreMode.None));
             }
         } else {
             if (fieldDetails.get("type").equals("keyword")) {
-                disMaxQueryBuilder.add(QueryBuilders.termQuery(fieldToSearch+".raw", searchKey));
+                disMaxQueryBuilder.add(QueryBuilders.termQuery(fieldToSearch + ".raw", searchKey));
             } else {
                 disMaxQueryBuilder.add(QueryBuilders.matchQuery(fieldToSearch, searchKey));
             }
@@ -222,15 +221,14 @@ public class ElasticSearchProvider implements DataProvider {
             Terms terms = null;
             SearchResponse searchResponse = null;
 
-            if(nested){
+            if (nested) {
                 searchSourceBuilder.aggregation(AggregationBuilders.nested("nested", path)
-                        .subAggregation(AggregationBuilders.terms("field").field(path+"."+fieldname+".raw")));
+                        .subAggregation(AggregationBuilders.terms("field").field(path + "." + fieldname + ".raw")));
                 searchResponse = restClient.search(searchRequest, RequestOptions.DEFAULT);
                 ParsedNested parsedNested = searchResponse.getAggregations().get("nested");
                 terms = (Terms) parsedNested.getAggregations().get("field");
-            }
-            else{
-                searchSourceBuilder.aggregation(AggregationBuilders.terms("field").field(fieldname+".raw"));
+            } else {
+                searchSourceBuilder.aggregation(AggregationBuilders.terms("field").field(fieldname + ".raw"));
                 searchResponse = restClient.search(searchRequest, RequestOptions.DEFAULT);
                 terms = searchResponse.getAggregations().get("field");
             }
@@ -286,6 +284,16 @@ public class ElasticSearchProvider implements DataProvider {
                         new FilterValueDTO("http://publications.europa.eu/resource/authority/data-theme/INTR", "International issues", "International issues", -1),
                         new FilterValueDTO("http://publications.europa.eu/resource/authority/data-theme/OP_DATPRO", "Provisional data", "Provisional data", -1)
                 )).build();
+    }
+
+    @Override
+    public List<DataSetLongViewDTO> getSubRelatedListOfDataSets(String uri, Long low, Long limit, OrderByDTO orderByDTO, FilterDTO[] filterDTOS) {
+        return getSubListOfDataSets("", low, limit, new String[0], orderByDTO, filterDTOS);// TODO: 12/19/19 implement the function
+    }
+
+    @Override
+    public Long getNumberOfRelatedDataSets(String uri, OrderByDTO orderByDTO, FilterDTO[] filterDTOS) {
+        return getNumberOfDataSets("", new String[0], orderByDTO, filterDTOS); // TODO: 12/19/19 implement the function
     }
 
     private HashMap<String, String> returnFieldDetails(String fieldToSearch) {

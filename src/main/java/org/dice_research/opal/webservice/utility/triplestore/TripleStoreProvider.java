@@ -319,6 +319,16 @@ public class TripleStoreProvider implements DataProvider {
         return null;
     }
 
+    @Override
+    public List<DataSetLongViewDTO> getSubRelatedListOfDataSets(String uri, Long low, Long limit, OrderByDTO orderByDTO, FilterDTO[] filterDTOS) {
+        return getSubListOfDataSets("", low, limit, new String[0], orderByDTO, filterDTOS);// TODO: 12/19/19 implement the function
+    }
+
+    @Override
+    public Long getNumberOfRelatedDataSets(String uri, OrderByDTO orderByDTO, FilterDTO[] filterDTOS) {
+        return getNumberOfDataSets("", new String[0], orderByDTO, filterDTOS); // TODO: 12/19/19 implement the function
+    }
+
     private String getSparQLSearchQuery(String searchKey, String[] searchIn, FilterDTO[] filters, String resourceName) {
         StringBuilder filtersString = new StringBuilder();
         int cnt = 0;

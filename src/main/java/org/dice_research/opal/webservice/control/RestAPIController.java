@@ -33,6 +33,15 @@ public class RestAPIController {
     }
 
     @CrossOrigin
+    @PostMapping("/dataSets/getNumberOfRelatedDataSets")
+    public Long getNumberOFDataSets(
+            @RequestParam(name = "uri", required = false, defaultValue = "0") String uri,
+            @RequestBody(required = false) SearchDTO searchDTO
+    ) {
+        return provider.getNumberOfRelatedDataSets(uri, searchDTO.getOrderByDTO(),  searchDTO.getFilterDTOS());
+    }
+
+    @CrossOrigin
     @PostMapping("/dataSets/getSubList")
     public List<DataSetLongViewDTO> getSubListOfDataSets(
             @RequestParam(name = "searchKey", required = false, defaultValue = "") String searchKey,
@@ -42,6 +51,18 @@ public class RestAPIController {
             @RequestBody(required = false)  SearchDTO searchDTO
     ) {
         return provider.getSubListOfDataSets(searchKey, low, limit, searchIn,
+                searchDTO.getOrderByDTO(), searchDTO.getFilterDTOS());
+    }
+
+    @CrossOrigin
+    @PostMapping("/dataSets/getRelatedSubList")
+    public List<DataSetLongViewDTO> getSubListOfRelatedDataSets(
+            @RequestParam(name = "uri", required = false, defaultValue = "0") String uri,
+            @RequestParam(name = "low", required = false, defaultValue = "0") Long low,
+            @RequestParam(name = "limit", required = false, defaultValue = "10") Long limit,
+            @RequestBody(required = false)  SearchDTO searchDTO
+    ) {
+        return provider.getSubRelatedListOfDataSets(uri, low, limit,
                 searchDTO.getOrderByDTO(), searchDTO.getFilterDTOS());
     }
 

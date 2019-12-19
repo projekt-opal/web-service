@@ -22,4 +22,8 @@ public interface DataProvider {
     DataSetDTO getDataSet(String uri);
 
     FilterDTO getTopFilterOptions(String filterType, String searchKey, String[] searchIn, String filterText);
+
+    List<DataSetLongViewDTO> getSubRelatedListOfDataSets(String uri, Long low, Long limit, OrderByDTO orderByDTO, FilterDTO[] filterDTOS);
+
+    Long getNumberOfRelatedDataSets(String uri, OrderByDTO orderByDTO, FilterDTO[] filterDTOS);
 }
