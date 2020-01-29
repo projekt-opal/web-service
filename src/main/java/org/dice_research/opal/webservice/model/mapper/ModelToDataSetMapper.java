@@ -134,7 +134,7 @@ public class ModelToDataSetMapper {
                         String s = downloadUrlIterator.nextNode().toString();
                         DistributionDTO distributionDTO = new DistributionDTO();
                         distributionDTO.setUrl(s);
-                        if (s.matches(".*\\..+")) {
+                        if (s.matches(".*\\..+")) { // TODO: 1/13/20 User dct:format
                             String[] split = s.split("\\.");
                             String fileType = split[split.length - 1];
                             distributionDTO.setFileType(fileType);
