@@ -21,11 +21,11 @@ public class QueryExecutionFactoryHttpProvider implements QueryExecutionFactoryP
     private org.apache.http.auth.Credentials credentials;
     private org.aksw.jena_sparql_api.core.QueryExecutionFactory qef;
 
-    @Value(value = "${info.opal.tripleStore.url}")
+    @Value(value = "${opalinfo.tripleStore.url}")
     private String url;
-    @Value(value = "${info.opal.tripleStore.username}")
+    @Value(value = "${opalinfo.tripleStore.username}")
     private String username;
-    @Value(value = "${info.opal.tripleStore.password}")
+    @Value(value = "${opalinfo.tripleStore.password}")
     private String password;
 
     @PostConstruct

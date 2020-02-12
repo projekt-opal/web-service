@@ -1,8 +1,7 @@
 server:
   port: 8081
 
-info:
-  opal:
+opalinfo:
     tripleStore:
       url: http://${OPAL_TRIPLESTORE_URL}:3030/opal/query
       username: ${OPAL_TRIPLESTORE_USERNAME}

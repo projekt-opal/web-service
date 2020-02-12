@@ -9,4 +9,9 @@ public class SearchDTO {
     private OrderByDTO orderByDTO;
     @JsonFormat(with = JsonFormat.Feature.ACCEPT_CASE_INSENSITIVE_PROPERTIES)
     private FilterDTO[] filterDTOS;
+
+
+    public SearchDTO() {
+        filterDTOS = new FilterDTO[0];
+    }
 }
