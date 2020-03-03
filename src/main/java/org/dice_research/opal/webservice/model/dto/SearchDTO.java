@@ -5,13 +5,18 @@ import lombok.Data;
 
 @Data
 public class SearchDTO {
-    @JsonFormat(with = JsonFormat.Feature.ACCEPT_CASE_INSENSITIVE_PROPERTIES)
-    private OrderByDTO orderByDTO;
-    @JsonFormat(with = JsonFormat.Feature.ACCEPT_CASE_INSENSITIVE_PROPERTIES)
-    private FilterDTO[] filterDTOS;
 
+    @JsonFormat(with = JsonFormat.Feature.ACCEPT_CASE_INSENSITIVE_PROPERTIES)
+    private String searchKey;
+    @JsonFormat(with = JsonFormat.Feature.ACCEPT_CASE_INSENSITIVE_PROPERTIES)
+    private String[] searchIn;
+    @JsonFormat(with = JsonFormat.Feature.ACCEPT_CASE_INSENSITIVE_PROPERTIES)
+    private OrderByDTO orderBy;
+    @JsonFormat(with = JsonFormat.Feature.ACCEPT_CASE_INSENSITIVE_PROPERTIES)
+    private FilterDTO[] filters;
 
     public SearchDTO() {
-        filterDTOS = new FilterDTO[0];
+        searchIn = new String[0];
+        filters = new FilterDTO[0];
     }
 }

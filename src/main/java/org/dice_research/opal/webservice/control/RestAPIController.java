@@ -1,7 +1,7 @@
 package org.dice_research.opal.webservice.control;
 
 import org.dice_research.opal.webservice.model.dto.*;
-import org.dice_research.opal.webservice.utility.DataProvider;
+import org.dice_research.opal.webservice.services.ElasticSearchProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,22 +14,17 @@ public class RestAPIController {
 
     private static final Logger logger = LoggerFactory.getLogger(RestAPIController.class);
 
-    private final DataProvider provider;
+    private final ElasticSearchProvider provider;
 
     @Autowired
-    public RestAPIController(DataProvider provider) {
+    public RestAPIController(ElasticSearchProvider provider) {
         this.provider = provider;
     }
 
     @CrossOrigin
     @PostMapping("/dataSets/getNumberOfDataSets")
-    public Long getNumberOFDataSets(
-            @RequestParam(name = "searchKey", required = false, defaultValue = "") String searchKey,
-            @RequestParam(name = "searchIn", required = false) String[] searchIn,
-            @RequestBody(required = false) SearchDTO searchDTO
-    ) {
-        return provider.getNumberOfDataSets(searchKey, searchIn,
-                searchDTO.getOrderByDTO(),  searchDTO.getFilterDTOS());
+    public Long getNumberOFDataSets(@RequestBody() SearchDTO searchDTO) {
+        return provider.getNumberOfDataSets(searchDTO);
     }
 
     @CrossOrigin
@@ -38,7 +33,8 @@ public class RestAPIController {
             @RequestParam(name = "uri", required = false, defaultValue = "0") String uri,
             @RequestBody(required = false) SearchDTO searchDTO
     ) {
-        return provider.getNumberOfRelatedDataSets(uri, searchDTO.getOrderByDTO(),  searchDTO.getFilterDTOS());
+        return null;
+//        return provider.getNumberOfRelatedDataSets(uri, searchDTO.getOrderBy(), searchDTO.getFilters());
     }
 
     @CrossOrigin
@@ -48,10 +44,9 @@ public class RestAPIController {
             @RequestParam(name = "searchIn", required = false) String[] searchIn,
             @RequestParam(name = "low", required = false, defaultValue = "0") Long low,
             @RequestParam(name = "limit", required = false, defaultValue = "10") Long limit,
-            @RequestBody(required = false)  SearchDTO searchDTO
+            @RequestBody(required = false) SearchDTO searchDTO
     ) {
-        return provider.getSubListOfDataSets(searchKey, low, limit, searchIn,
-                searchDTO.getOrderByDTO(), searchDTO.getFilterDTOS());
+        return null;
     }
 
     @CrossOrigin
@@ -60,16 +55,15 @@ public class RestAPIController {
             @RequestParam(name = "uri", required = false, defaultValue = "0") String uri,
             @RequestParam(name = "low", required = false, defaultValue = "0") Long low,
             @RequestParam(name = "limit", required = false, defaultValue = "10") Long limit,
-            @RequestBody(required = false)  SearchDTO searchDTO
+            @RequestBody(required = false) SearchDTO searchDTO
     ) {
-        return provider.getSubRelatedListOfDataSets(uri, low, limit,
-                searchDTO.getOrderByDTO(), searchDTO.getFilterDTOS());
+        return null;
     }
 
     @CrossOrigin
     @GetMapping("/dataSet")
     public DataSetDTO getDataSet(@RequestParam(name = "uri", required = false) String uri) {
-        return provider.getDataSet(uri);
+        return null;
     }
 
     @CrossOrigin
@@ -77,7 +71,7 @@ public class RestAPIController {
     public List<FilterDTO> getFilters(
             @RequestParam(name = "searchKey", required = false, defaultValue = "") String searchKey,
             @RequestParam(name = "searchIn", required = false) String[] searchIn) {
-        return provider.getFilters(searchKey, searchIn);
+        return null;
     }
 
     // TODO: 10/1/19 An DTO for the RequestBody is needed
@@ -88,7 +82,7 @@ public class RestAPIController {
             @RequestParam(required = false) String[] searchIn,
             @RequestBody(required = false) FilterValueCountDTO filterValueCountDTO
     ) {
-        return provider.getCountOfFilterValue(filterValueCountDTO.getFilterUri(), filterValueCountDTO.getValueUri(), searchKey, searchIn);
+        return null;
     }
 
     @CrossOrigin
@@ -98,7 +92,7 @@ public class RestAPIController {
             @RequestParam(required = false) String searchKey,
             @RequestParam(required = false) String[] searchIn,
             @RequestParam(required = false) String filterType) {
-        return provider.getTopFilterOptions(filterType, searchKey, searchIn, filterText);
+        return null;
     }
 
 }

@@ -1,6 +1,11 @@
 server:
   port: 8081
 
+spring:
+  elasticsearch:
+    rest:
+      uris: http://localhost:9200
+
 opalinfo:
     tripleStore:
       url: http://${OPAL_TRIPLESTORE_URL}:3030/opal/query
