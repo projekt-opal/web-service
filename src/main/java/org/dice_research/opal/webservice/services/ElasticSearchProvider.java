@@ -1,21 +1,17 @@
 package org.dice_research.opal.webservice.services;
 
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.lucene.search.join.ScoreMode;
 import org.dice_research.opal.webservice.model.dto.*;
-import org.dice_research.opal.webservice.model.mapper.JsonObjecttoDataSetMapper;
+import org.dice_research.opal.webservice.model.mapper.JsonObjectToDataSetMapper;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.index.query.*;
 import org.elasticsearch.search.SearchHit;
-import org.elasticsearch.search.SearchHits;
-import org.elasticsearch.search.aggregations.AggregationBuilders;
-import org.elasticsearch.search.aggregations.bucket.nested.ParsedNested;
-import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,10 +25,10 @@ import java.util.*;
 public class ElasticSearchProvider {
 
     private final RestHighLevelClient restHighLevelClient;
-    private final JsonObjecttoDataSetMapper jsonObjecttoDataSetMapper;
+    private final JsonObjectToDataSetMapper jsonObjecttoDataSetMapper;
 
     @Autowired
-    public ElasticSearchProvider(RestHighLevelClient restHighLevelClient, JsonObjecttoDataSetMapper jsonObjecttoDataSetMapper) {
+    public ElasticSearchProvider(RestHighLevelClient restHighLevelClient, JsonObjectToDataSetMapper jsonObjecttoDataSetMapper) {
         this.restHighLevelClient = restHighLevelClient;
         this.jsonObjecttoDataSetMapper = jsonObjecttoDataSetMapper;
     }
@@ -63,6 +59,58 @@ public class ElasticSearchProvider {
             return -1L;
         }
     }
+
+    public List<DataSetLongViewDTO> getSublistOfDataSets(SearchDTO searchDTO, Integer low, Integer limit) {
+        List<DataSetLongViewDTO> ret = new ArrayList<>();
+        try {
+            SearchRequest searchRequest = new SearchRequest();
+
+            SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+            searchSourceBuilder.from(low);
+            searchSourceBuilder.size(limit);
+
+            BoolQueryBuilder qb = QueryBuilders.boolQuery();
+            QueryBuilder searchKeyQuery = getSearchKeyQuery(searchDTO.getSearchKey(), searchDTO.getSearchIn());
+            List<QueryBuilder> filtersQueries = getFiltersQueries(searchDTO.getFilters());
+            List<QueryBuilder> orderByQueries = getOrderBy(searchDTO); // TODO: 3/4/20 for the ones using sort maybe more code is needed
+
+            qb.must(searchKeyQuery).must(searchKeyQuery);
+            filtersQueries.forEach(qb::must);
+            orderByQueries.forEach(qb::should);
+
+            searchSourceBuilder.query(qb);
+
+            searchRequest.indices("opal");
+            searchRequest.source(searchSourceBuilder);
+
+            SearchResponse search = restHighLevelClient.search(searchRequest, RequestOptions.DEFAULT);
+            SearchHit[] hits = search.getHits().getHits();
+            for(SearchHit hit: hits){
+                String sourceAsString = hit.getSourceAsString();
+                JSONObject jsonObject = new JSONObject(sourceAsString);
+                DataSetLongViewDTO dataSetLongViewDTO = JsonObjectToDataSetMapper.toDataSetLongViewDTO(jsonObject);
+                ret.add(dataSetLongViewDTO);
+            }
+        } catch (IOException e) {
+            log.error("", e);
+        }
+        return ret;
+    }
+
+    private List<QueryBuilder> getOrderBy(SearchDTO searchDTO) {
+        List<QueryBuilder> ret = new ArrayList<>();
+
+        String selectedOrderValue = searchDTO.getOrderBy().getSelectedOrderValue();
+        if(selectedOrderValue.equals("relevance")) return ret;
+        if(selectedOrderValue.equals("title")) {
+            ret.add(QueryBuilders.matchQuery("title", searchDTO.getSearchKey()));
+            ret.add(QueryBuilders.matchQuery("title_de", searchDTO.getSearchKey()));
+            return ret;
+        }
+        // TODO: 3/4/20 For issue date and location sort must be used
+        return ret;
+    }
+
 
     private List<QueryBuilder> getFiltersQueries(FilterDTO[] filters) {
 
@@ -140,5 +188,4 @@ public class ElasticSearchProvider {
             return QueryBuilders.multiMatchQuery(searchKey, fieldNames.toArray(new String[0]));
         }
     }
-
 }

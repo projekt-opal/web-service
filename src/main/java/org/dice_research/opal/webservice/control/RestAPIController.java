@@ -40,13 +40,11 @@ public class RestAPIController {
     @CrossOrigin
     @PostMapping("/dataSets/getSubList")
     public List<DataSetLongViewDTO> getSubListOfDataSets(
-            @RequestParam(name = "searchKey", required = false, defaultValue = "") String searchKey,
-            @RequestParam(name = "searchIn", required = false) String[] searchIn,
-            @RequestParam(name = "low", required = false, defaultValue = "0") Long low,
-            @RequestParam(name = "limit", required = false, defaultValue = "10") Long limit,
+            @RequestParam(name = "low", required = false, defaultValue = "0") Integer low,
+            @RequestParam(name = "limit", required = false, defaultValue = "10") Integer limit,
             @RequestBody(required = false) SearchDTO searchDTO
     ) {
-        return null;
+        return provider.getSublistOfDataSets(searchDTO, low, limit);
     }
 
     @CrossOrigin
