@@ -29,7 +29,7 @@ public class RestAPIController {
 
     @CrossOrigin
     @PostMapping("/dataSets/getNumberOfRelatedDataSets")
-    public Long getNumberOFDataSets(
+    public Long getNumberOFRelatedDataSets(
             @RequestParam(name = "uri", required = false, defaultValue = "0") String uri,
             @RequestBody(required = false) SearchDTO searchDTO
     ) {
@@ -65,11 +65,11 @@ public class RestAPIController {
     }
 
     @CrossOrigin
-    @GetMapping("/filters/list")
+    @PostMapping("/filters/list")
     public List<FilterDTO> getFilters(
-            @RequestParam(name = "searchKey", required = false, defaultValue = "") String searchKey,
-            @RequestParam(name = "searchIn", required = false) String[] searchIn) {
-        return null;
+            @RequestBody SearchDTO searchDTO
+    ) {
+        return provider.getFilters(searchDTO);
     }
 
     // TODO: 10/1/19 An DTO for the RequestBody is needed

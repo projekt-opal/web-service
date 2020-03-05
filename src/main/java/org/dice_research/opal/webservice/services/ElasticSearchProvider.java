@@ -1,7 +1,5 @@
 package org.dice_research.opal.webservice.services;
 
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.lucene.search.join.ScoreMode;
 import org.dice_research.opal.webservice.model.dto.*;
@@ -12,13 +10,21 @@ import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.index.query.*;
 import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.aggregations.Aggregation;
+import org.elasticsearch.search.aggregations.AggregationBuilders;
+import org.elasticsearch.search.aggregations.bucket.nested.NestedAggregationBuilder;
+import org.elasticsearch.search.aggregations.bucket.nested.ParsedNested;
+import org.elasticsearch.search.aggregations.bucket.terms.ParsedStringTerms;
+import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 @Component
 @Slf4j
@@ -44,7 +50,7 @@ public class ElasticSearchProvider {
             QueryBuilder searchKeyQuery = getSearchKeyQuery(searchDTO.getSearchKey(), searchDTO.getSearchIn());
             List<QueryBuilder> filtersQueries = getFiltersQueries(searchDTO.getFilters());
 
-            qb.must(searchKeyQuery).must(searchKeyQuery);
+            qb.must(searchKeyQuery);
             filtersQueries.forEach(qb::must);
 
             searchSourceBuilder.query(qb);
@@ -74,7 +80,7 @@ public class ElasticSearchProvider {
             List<QueryBuilder> filtersQueries = getFiltersQueries(searchDTO.getFilters());
             List<QueryBuilder> orderByQueries = getOrderBy(searchDTO); // TODO: 3/4/20 for the ones using sort maybe more code is needed
 
-            qb.must(searchKeyQuery).must(searchKeyQuery);
+            qb.must(searchKeyQuery);
             filtersQueries.forEach(qb::must);
             orderByQueries.forEach(qb::should);
 
@@ -85,7 +91,7 @@ public class ElasticSearchProvider {
 
             SearchResponse search = restHighLevelClient.search(searchRequest, RequestOptions.DEFAULT);
             SearchHit[] hits = search.getHits().getHits();
-            for(SearchHit hit: hits){
+            for (SearchHit hit : hits) {
                 String sourceAsString = hit.getSourceAsString();
                 JSONObject jsonObject = new JSONObject(sourceAsString);
                 DataSetLongViewDTO dataSetLongViewDTO = JsonObjectToDataSetMapper.toDataSetLongViewDTO(jsonObject);
@@ -97,12 +103,114 @@ public class ElasticSearchProvider {
         return ret;
     }
 
+    public List<FilterDTO> getFilters(SearchDTO searchDTO) {
+        List<FilterDTO> ret = new ArrayList<>();
+        try {
+            ret.add(getFilterListOfPublishers(searchDTO));
+            ret.add(getFilterListOfLicenses(searchDTO));
+        } catch (IOException e) {
+            log.error("", e);
+        }
+        return ret;
+    }
+
+    private FilterDTO getFilterListOfLicenses(SearchDTO searchDTO) throws IOException {
+        String searchField = "distributions.license.uri.keyword";
+        List<ValueDTO> values = calculateTopValues(searchDTO, searchField, "distributions.license");
+        //update absoluteCount
+        values.forEach(v ->
+                v.getCount().setAbsolute(calculateTheAbsoluteCount(searchField, v.getValue())));
+        return FilterDTO.builder().title("License").hasExternalLink(true).hasStaticValues(false).values(values)
+                .searchField(searchField).build();
+    }
+
+    private FilterDTO getFilterListOfPublishers(SearchDTO searchDTO) throws IOException {
+        String searchField = "publisher.name.keyword";
+        List<ValueDTO> values = calculateTopValues(searchDTO, searchField, "publisher");
+        //update absoluteCount
+        values.forEach(v ->
+                v.getCount().setAbsolute(calculateTheAbsoluteCount(searchField, v.getValue())));
+        return FilterDTO.builder().title("Publisher").hasExternalLink(true).hasStaticValues(false).values(values)
+                .searchField(searchField).build();
+    }
+
+    private List<ValueDTO> calculateTopValues(SearchDTO searchDTO, String searchField, String nestedPath) throws IOException {
+        List<ValueDTO> values = new ArrayList<>();
+        SearchRequest searchRequest = new SearchRequest();
+        searchRequest.indices("opal");
+
+        SearchSourceBuilder searchSourceBuilder = generateTopQuery(searchDTO, searchField, nestedPath);
+        searchRequest.source(searchSourceBuilder);
+
+        SearchResponse searchResponse = restHighLevelClient.search(searchRequest, RequestOptions.DEFAULT);
+
+        Aggregation top_nestedPath_outer = searchResponse.getAggregations().get("top_nestedPath");
+        Aggregation top_nestedPath_inner = ((ParsedNested) top_nestedPath_outer).getAggregations().asList().get(0);
+        List<? extends Terms.Bucket> buckets = ((ParsedStringTerms) top_nestedPath_inner).getBuckets();
+
+        buckets.forEach(b -> {
+            String keyAsString = b.getKeyAsString();
+            long relativeCount = b.getDocCount();
+            ValueDTO valueDTO = new ValueDTO();
+            valueDTO.setValue(keyAsString);
+            CounterDTO counterDTO = new CounterDTO();
+            counterDTO.setRelative(relativeCount);
+            valueDTO.setCount(counterDTO);
+            values.add(valueDTO);
+        });
+        return values;
+    }
+
+    private int calculateTheAbsoluteCount(String fieldQuery, String value) {
+        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+        searchSourceBuilder.size(0);
+        TermQueryBuilder query = QueryBuilders.termQuery(fieldQuery, value);
+        if(fieldQuery.contains(".")) {
+            String[] split = fieldQuery.split("\\.");
+            int lastIdx = (split[split.length - 1].equals("keyword")) ? split.length - 2 : split.length - 1;
+            String[] subPath = Arrays.copyOf(split, lastIdx);
+            searchSourceBuilder.query(QueryBuilders.nestedQuery(String.join(".", subPath), query, ScoreMode.Avg));
+        } else
+            searchSourceBuilder.query(query);
+
+        SearchRequest searchRequest = new SearchRequest();
+        searchRequest.indices("opal");
+        searchRequest.source(searchSourceBuilder);
+        try {
+            SearchResponse searchResponse = restHighLevelClient.search(searchRequest, RequestOptions.DEFAULT);
+            return (int) searchResponse.getHits().getTotalHits().value;
+        } catch (IOException e) {
+            log.error("", e);
+            return -1;
+        }
+
+    }
+
+    private SearchSourceBuilder generateTopQuery(SearchDTO searchDTO, String searchField, String nestedPath) {
+        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+        searchSourceBuilder.size(0);
+
+        BoolQueryBuilder qb = QueryBuilders.boolQuery();
+//            only searchQuery and searchIn are important for generating filter list
+        QueryBuilder searchKeyQuery = getSearchKeyQuery(searchDTO.getSearchKey(), searchDTO.getSearchIn());
+
+        qb.must(searchKeyQuery);
+
+        searchSourceBuilder.query(qb);
+
+        NestedAggregationBuilder publisherAggregation = AggregationBuilders.nested("top_nestedPath", nestedPath)
+                .subAggregation(AggregationBuilders.terms("top_nestedPath").field(searchField));
+
+        searchSourceBuilder.aggregation(publisherAggregation);
+        return searchSourceBuilder;
+    }
+
     private List<QueryBuilder> getOrderBy(SearchDTO searchDTO) {
         List<QueryBuilder> ret = new ArrayList<>();
 
         String selectedOrderValue = searchDTO.getOrderBy().getSelectedOrderValue();
-        if(selectedOrderValue.equals("relevance")) return ret;
-        if(selectedOrderValue.equals("title")) {
+        if (selectedOrderValue.equals("relevance")) return ret;
+        if (selectedOrderValue.equals("title")) {
             ret.add(QueryBuilders.matchQuery("title", searchDTO.getSearchKey()));
             ret.add(QueryBuilders.matchQuery("title_de", searchDTO.getSearchKey()));
             return ret;
@@ -138,7 +246,7 @@ public class ElasticSearchProvider {
                 (selectedRangeValues.getGte().equals("-1") && selectedRangeValues.getLte().equals("-1")))
             return null;
 
-        RangeQueryBuilder range = QueryBuilders.rangeQuery(getFieldName(filterDTO.getUri()));
+        RangeQueryBuilder range = QueryBuilders.rangeQuery(getFieldName(filterDTO.getSearchField()));
         if (!selectedRangeValues.getGte().equals("-1")) range.gte(selectedRangeValues.getGte());
         if (!selectedRangeValues.getLte().equals("-1")) range.lte(selectedRangeValues.getLte() + "||+1d");
         return range;
@@ -146,7 +254,7 @@ public class ElasticSearchProvider {
 
     private QueryBuilder getFilterQuery(FilterDTO filterDTO) {
         if (filterDTO.getValues() == null || filterDTO.getValues().isEmpty()) return null;
-        String fieldName = getFieldName(filterDTO.getUri());
+        String fieldName = getFieldName(filterDTO.getSearchField());
         BoolQueryBuilder filterQueryBuilder = QueryBuilders.boolQuery();
         for (ValueDTO v : filterDTO.getValues()) {
             filterQueryBuilder.should(QueryBuilders.matchQuery(fieldName, v.getUri()));
