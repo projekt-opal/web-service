@@ -2,6 +2,7 @@ package org.dice_research.opal.webservice.services;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.lucene.search.join.ScoreMode;
+import org.dice_research.opal.webservice.config.ThemeConfiguration;
 import org.dice_research.opal.webservice.model.dto.*;
 import org.dice_research.opal.webservice.model.mapper.JsonObjectToDataSetMapper;
 import org.elasticsearch.action.search.SearchRequest;
@@ -31,12 +32,12 @@ import java.util.List;
 public class ElasticSearchProvider {
 
     private final RestHighLevelClient restHighLevelClient;
-    private final JsonObjectToDataSetMapper jsonObjecttoDataSetMapper;
+    private final ThemeConfiguration themeConfiguration;
 
     @Autowired
-    public ElasticSearchProvider(RestHighLevelClient restHighLevelClient, JsonObjectToDataSetMapper jsonObjecttoDataSetMapper) {
+    public ElasticSearchProvider(RestHighLevelClient restHighLevelClient, ThemeConfiguration themeConfiguration) {
         this.restHighLevelClient = restHighLevelClient;
-        this.jsonObjecttoDataSetMapper = jsonObjecttoDataSetMapper;
+        this.themeConfiguration = themeConfiguration;
     }
 
     public long getNumberOfDataSets(SearchDTO searchDTO) {
@@ -106,6 +107,7 @@ public class ElasticSearchProvider {
     public List<FilterDTO> getFilters(SearchDTO searchDTO) {
         List<FilterDTO> ret = new ArrayList<>();
         try {
+            ret.add(getFilterListOfThemes(searchDTO));
             ret.add(getFilterListOfPublishers(searchDTO));
             ret.add(getFilterListOfLicenses(searchDTO));
         } catch (IOException e) {
@@ -114,12 +116,35 @@ public class ElasticSearchProvider {
         return ret;
     }
 
+    private FilterDTO getFilterListOfThemes(SearchDTO searchDTO) {
+        String searchField = "themes";
+        List<ValueDTO> values = getTopThemeValues();
+
+        //update relativeCount
+        values.forEach(v ->
+                v.getCount().setRelative(calculateTheRelativeCount(searchDTO, searchField,
+                        themeConfiguration.getRevMap().get(v.getValue()))));
+
+        //update absoluteCount
+        values.forEach(v ->
+                v.getCount().setAbsolute(calculateTheAbsoluteCount(searchDTO, searchField,
+                        themeConfiguration.getRevMap().get(v.getValue()))));
+
+        return FilterDTO.builder().title("Theme").hasExternalLink(true).hasStaticValues(false).values(values)
+                .searchField(searchField).build();
+    }
+
     private FilterDTO getFilterListOfLicenses(SearchDTO searchDTO) throws IOException {
         String searchField = "distributions.license.uri.keyword";
         List<ValueDTO> values = calculateTopValues(searchDTO, searchField, "distributions.license");
+
         //update absoluteCount
         values.forEach(v ->
-                v.getCount().setAbsolute(calculateTheAbsoluteCount(searchField, v.getValue())));
+                v.getCount().setAbsolute(calculateTheAbsoluteCount(searchDTO, searchField, v.getValue())));
+
+        //update relativeCount
+        values.forEach(v ->
+                v.getCount().setRelative(calculateTheRelativeCount(searchDTO, searchField, v.getValue())));
         return FilterDTO.builder().title("License").hasExternalLink(true).hasStaticValues(false).values(values)
                 .searchField(searchField).build();
     }
@@ -127,11 +152,29 @@ public class ElasticSearchProvider {
     private FilterDTO getFilterListOfPublishers(SearchDTO searchDTO) throws IOException {
         String searchField = "publisher.name.keyword";
         List<ValueDTO> values = calculateTopValues(searchDTO, searchField, "publisher");
+
+
         //update absoluteCount
         values.forEach(v ->
-                v.getCount().setAbsolute(calculateTheAbsoluteCount(searchField, v.getValue())));
+                v.getCount().setAbsolute(calculateTheAbsoluteCount(searchDTO, searchField, v.getValue())));
+
+        //update relativeCount
+        values.forEach(v ->
+                v.getCount().setRelative(calculateTheRelativeCount(searchDTO, searchField, v.getValue())));
         return FilterDTO.builder().title("Publisher").hasExternalLink(true).hasStaticValues(false).values(values)
                 .searchField(searchField).build();
+    }
+
+    private List<ValueDTO> getTopThemeValues() {
+        List<ValueDTO> values = new ArrayList<>();
+        themeConfiguration.getMap().forEach((uri, value) -> {
+            ValueDTO valueDTO = new ValueDTO();
+            valueDTO.setValue(value);
+            valueDTO.setCount(new CounterDTO());
+            values.add(valueDTO);
+        });
+
+        return values;
     }
 
     private List<ValueDTO> calculateTopValues(SearchDTO searchDTO, String searchField, String nestedPath) throws IOException {
@@ -150,28 +193,67 @@ public class ElasticSearchProvider {
 
         buckets.forEach(b -> {
             String keyAsString = b.getKeyAsString();
-            long relativeCount = b.getDocCount();
             ValueDTO valueDTO = new ValueDTO();
             valueDTO.setValue(keyAsString);
-            CounterDTO counterDTO = new CounterDTO();
-            counterDTO.setRelative(relativeCount);
-            valueDTO.setCount(counterDTO);
+            valueDTO.setCount(new CounterDTO());
             values.add(valueDTO);
         });
         return values;
     }
 
-    private int calculateTheAbsoluteCount(String fieldQuery, String value) {
+    private int calculateTheAbsoluteCount(SearchDTO searchDTO, String fieldQuery, String value) {
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         searchSourceBuilder.size(0);
+        BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery();
+
+        QueryBuilder searchKeyQuery = getSearchKeyQuery(searchDTO.getSearchKey(), searchDTO.getSearchIn());
+        boolQueryBuilder.must(searchKeyQuery);
+
         TermQueryBuilder query = QueryBuilders.termQuery(fieldQuery, value);
-        if(fieldQuery.contains(".")) {
+        if (fieldQuery.contains(".")) {
             String[] split = fieldQuery.split("\\.");
             int lastIdx = (split[split.length - 1].equals("keyword")) ? split.length - 2 : split.length - 1;
             String[] subPath = Arrays.copyOf(split, lastIdx);
-            searchSourceBuilder.query(QueryBuilders.nestedQuery(String.join(".", subPath), query, ScoreMode.Avg));
+            boolQueryBuilder.must(QueryBuilders.nestedQuery(String.join(".", subPath), query, ScoreMode.Avg));
         } else
-            searchSourceBuilder.query(query);
+            boolQueryBuilder.must(query);
+
+        searchSourceBuilder.query(boolQueryBuilder);
+
+        SearchRequest searchRequest = new SearchRequest();
+        searchRequest.indices("opal");
+        searchRequest.source(searchSourceBuilder);
+        try {
+            SearchResponse searchResponse = restHighLevelClient.search(searchRequest, RequestOptions.DEFAULT);
+            return (int) searchResponse.getHits().getTotalHits().value;
+        } catch (IOException e) {
+            log.error("", e);
+            return -1;
+        }
+
+    }
+
+    private int calculateTheRelativeCount(SearchDTO searchDTO, String fieldQuery, String value) {
+        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+        searchSourceBuilder.size(0);
+        BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery();
+
+        QueryBuilder searchKeyQuery = getSearchKeyQuery(searchDTO.getSearchKey(), searchDTO.getSearchIn());
+        boolQueryBuilder.must(searchKeyQuery);
+
+        List<QueryBuilder> filtersQueries = getFiltersQueries(searchDTO.getFilters());
+        filtersQueries.forEach(boolQueryBuilder::must);
+
+        TermQueryBuilder query = QueryBuilders.termQuery(fieldQuery, value);
+        if (fieldQuery.contains(".")) {
+            String[] split = fieldQuery.split("\\.");
+            int lastIdx = (split[split.length - 1].equals("keyword")) ? split.length - 2 : split.length - 1;
+            String[] subPath = Arrays.copyOf(split, lastIdx);
+            boolQueryBuilder.must(QueryBuilders.nestedQuery(String.join(".", subPath), query, ScoreMode.Avg));
+        } else
+            boolQueryBuilder.must(query);
+
+        searchSourceBuilder.query(boolQueryBuilder);
 
         SearchRequest searchRequest = new SearchRequest();
         searchRequest.indices("opal");
@@ -268,18 +350,18 @@ public class ElasticSearchProvider {
         return filterQueryBuilder;
     }
 
-    private String getFieldName(String uri) {
-        switch (uri) {
-            case "http://www.w3.org/ns/dcat#theme":
-                return "themes";
-            case "http://purl.org/dc/terms/publisher":
-                return "publisher.uri";
-            case "http://purl.org/dc/terms/creator":
-                return "creator.uri";
-            case "http://purl.org/dc/terms/license":
-                return "distributions.license.uri.keyword";
-        }
-        return uri;
+    private String getFieldName(String searchField) {
+//        switch (searchField) {
+//            case "http://www.w3.org/ns/dcat#theme":
+//                return "themes";
+//            case "http://purl.org/dc/terms/publisher":
+//                return "publisher.uri";
+//            case "http://purl.org/dc/terms/creator":
+//                return "creator.uri";
+//            case "http://purl.org/dc/terms/license":
+//                return "distributions.license.uri.keyword";
+//        } todo probably we can remove this function
+        return searchField;
     }
 
     private QueryBuilder getSearchKeyQuery(String searchKey, String[] searchIn) {
