@@ -6,6 +6,6 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 public class RangeDTO {
-    private String gte;
-    private String lte;
+    private String gte = "-1";
+    private String lte = "-1";
 }

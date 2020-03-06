@@ -110,10 +110,16 @@ public class ElasticSearchProvider {
             ret.add(getFilterListOfThemes(searchDTO));
             ret.add(getFilterListOfPublishers(searchDTO));
             ret.add(getFilterListOfLicenses(searchDTO));
+            ret.add(getIssueDate());
         } catch (IOException e) {
             log.error("", e);
         }
         return ret;
+    }
+
+    private FilterDTO getIssueDate() {
+        return FilterDTO.builder().title("Issue Date").searchField("issued")
+                .hasExternalLink(false).hasStaticValues(true).selectedRangeValues(new RangeDTO()).build();
     }
 
     private FilterDTO getFilterListOfThemes(SearchDTO searchDTO) {
