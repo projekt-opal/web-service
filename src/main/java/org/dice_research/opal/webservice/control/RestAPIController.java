@@ -1,9 +1,10 @@
 package org.dice_research.opal.webservice.control;
 
-import org.dice_research.opal.webservice.model.dto.*;
+import org.dice_research.opal.webservice.model.dto.DataSetDTO;
+import org.dice_research.opal.webservice.model.dto.DataSetLongViewDTO;
+import org.dice_research.opal.webservice.model.dto.FilterDTO;
+import org.dice_research.opal.webservice.model.dto.SearchDTO;
 import org.dice_research.opal.webservice.services.ElasticSearchProvider;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -11,8 +12,6 @@ import java.util.List;
 
 @RestController
 public class RestAPIController {
-
-    private static final Logger logger = LoggerFactory.getLogger(RestAPIController.class);
 
     private final ElasticSearchProvider provider;
 
@@ -72,25 +71,14 @@ public class RestAPIController {
         return provider.getFilters(searchDTO);
     }
 
-    // TODO: 10/1/19 An DTO for the RequestBody is needed
     @CrossOrigin
-    @PostMapping("/filter/count")
-    public Long getCount(
-            @RequestParam(required = false) String searchKey,
-            @RequestParam(required = false) String[] searchIn,
-            @RequestBody(required = false) FilterValueCountDTO filterValueCountDTO
-    ) {
-        return null;
-    }
-
-    @CrossOrigin
-    @GetMapping("/filteredOptions")
+    @PostMapping("/filteredOptions")
     public FilterDTO getFilter(
-            @RequestParam(required = false) String filterText,
-            @RequestParam(required = false) String searchKey,
-            @RequestParam(required = false) String[] searchIn,
-            @RequestParam(required = false) String filterType) {
-        return null;
+            @RequestBody(required = false) SearchDTO searchDTO,
+            @RequestParam(required = false) String filterGroupTitle,
+            @RequestParam(required = false) String containsText
+    ) {
+        return provider.getTopFiltersThatContain(searchDTO, filterGroupTitle, containsText);
     }
 
 }
