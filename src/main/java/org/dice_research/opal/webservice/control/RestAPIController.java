@@ -1,9 +1,9 @@
 package org.dice_research.opal.webservice.control;
 
 import org.dice_research.opal.webservice.model.dto.DataSetDTO;
-import org.dice_research.opal.webservice.model.dto.DataSetLongViewDTO;
 import org.dice_research.opal.webservice.model.dto.FilterDTO;
 import org.dice_research.opal.webservice.model.dto.SearchDTO;
+import org.dice_research.opal.webservice.model.entity.DataSet;
 import org.dice_research.opal.webservice.services.ElasticSearchProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -38,7 +38,7 @@ public class RestAPIController {
 
     @CrossOrigin
     @PostMapping("/dataSets/getSubList")
-    public List<DataSetLongViewDTO> getSubListOfDataSets(
+    public List<DataSetDTO> getSubListOfDataSets(
             @RequestParam(name = "low", required = false, defaultValue = "0") Integer low,
             @RequestParam(name = "limit", required = false, defaultValue = "10") Integer limit,
             @RequestBody(required = false) SearchDTO searchDTO
@@ -48,7 +48,7 @@ public class RestAPIController {
 
     @CrossOrigin
     @PostMapping("/dataSets/getRelatedSubList")
-    public List<DataSetLongViewDTO> getSubListOfRelatedDataSets(
+    public List<DataSetDTO> getSubListOfRelatedDataSets(
             @RequestParam(name = "uri", required = false, defaultValue = "0") String uri,
             @RequestParam(name = "low", required = false, defaultValue = "0") Long low,
             @RequestParam(name = "limit", required = false, defaultValue = "10") Long limit,
@@ -59,8 +59,8 @@ public class RestAPIController {
 
     @CrossOrigin
     @GetMapping("/dataSet")
-    public DataSetDTO getDataSet(@RequestParam(name = "uri", required = false) String uri) {
-        return null;
+    public DataSet getDataSet(@RequestParam(name = "uri", required = false) String uri) {
+        return provider.getDataSet(uri);
     }
 
     @CrossOrigin

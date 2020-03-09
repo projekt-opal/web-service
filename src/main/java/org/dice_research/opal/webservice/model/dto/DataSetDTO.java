@@ -1,6 +1,5 @@
 package org.dice_research.opal.webservice.model.dto;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
 import java.util.List;
@@ -12,12 +11,7 @@ public class DataSetDTO {
     private String description;
     private String issueDate;
     private List<String> theme;
-    private List<String> keywords;
-//    private String overallRating;
-    @JsonProperty("publisher")
-    private PublisherDTO publisherDTO;
-    @JsonProperty("distributions")
-    private List<DistributionDTO> distributionDTOS;
-    @JsonProperty("qualityMetrics")
-    private List<QualityMeasurementDTO> qualityMeasurementDOS;
+    private String publisherName;
+    private List<String> license;
+    // TODO: 12/18/19 Add overall rating
 }

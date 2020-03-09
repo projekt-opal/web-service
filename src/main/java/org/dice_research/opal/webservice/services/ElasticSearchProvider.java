@@ -1,9 +1,11 @@
 package org.dice_research.opal.webservice.services;
 
+import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.lucene.search.join.ScoreMode;
 import org.dice_research.opal.webservice.config.ThemeConfiguration;
 import org.dice_research.opal.webservice.model.dto.*;
+import org.dice_research.opal.webservice.model.entity.DataSet;
 import org.dice_research.opal.webservice.model.mapper.JsonObjectToDataSetMapper;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
@@ -69,8 +71,8 @@ public class ElasticSearchProvider {
         }
     }
 
-    public List<DataSetLongViewDTO> getSublistOfDataSets(SearchDTO searchDTO, Integer low, Integer limit) {
-        List<DataSetLongViewDTO> ret = new ArrayList<>();
+    public List<DataSetDTO> getSublistOfDataSets(SearchDTO searchDTO, Integer low, Integer limit) {
+        List<DataSetDTO> ret = new ArrayList<>();
         try {
             SearchRequest searchRequest = new SearchRequest();
 
@@ -97,8 +99,8 @@ public class ElasticSearchProvider {
             for (SearchHit hit : hits) {
                 String sourceAsString = hit.getSourceAsString();
                 JSONObject jsonObject = new JSONObject(sourceAsString);
-                DataSetLongViewDTO dataSetLongViewDTO = JsonObjectToDataSetMapper.toDataSetLongViewDTO(jsonObject);
-                ret.add(dataSetLongViewDTO);
+                DataSetDTO dataSetDTO = JsonObjectToDataSetMapper.toDataSetLongViewDTO(jsonObject);
+                ret.add(dataSetDTO);
             }
         } catch (IOException e) {
             log.error("", e);
@@ -140,6 +142,34 @@ public class ElasticSearchProvider {
         } catch (IOException e) {
             log.error("", e);
         }
+        return null;
+    }
+
+    public DataSet getDataSet(String uri) {
+
+        try {
+            SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+            searchSourceBuilder.size(1);
+            searchSourceBuilder.query(QueryBuilders.termQuery("uri", uri));
+
+            SearchRequest searchRequest = new SearchRequest();
+            searchRequest.source(searchSourceBuilder);
+
+            SearchResponse searchResponse = restHighLevelClient.search(searchRequest, RequestOptions.DEFAULT);
+            if(searchResponse.getHits().getTotalHits().value >= 1) {
+                SearchHit[] hits = searchResponse.getHits().getHits();
+                SearchHit hit = hits[0];
+                String sourceAsString = hit.getSourceAsString();
+//                JSONObject jsonObject = new JSONObject(sourceAsString);
+//                DataSetLongViewDTO dataSetDTO = JsonObjectToDataSetMapper.toDataSetDTO(jsonObject);
+                DataSet dataSet = new Gson().fromJson(sourceAsString, DataSet.class);
+                return dataSet;
+            }
+        } catch (IOException e) {
+            log.error("", e);
+        }
+
+
         return null;
     }
 
