@@ -7,7 +7,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
+import java.util.*;
 
 @Component
 @Slf4j
@@ -31,7 +31,7 @@ public class JsonObjectToDataSetMapper {
     }
 
     private static void setLicenses(JSONObject dataSetJsonObject, DataSetDTO dataSetDTO) {
-        dataSetDTO.setLicense(new ArrayList<>());
+        Set<String> licenses = new HashSet<>();
         if(dataSetJsonObject.has("distributions")) {
             JSONArray distributions = dataSetJsonObject.getJSONArray("distributions");
             for (int i = 0; i < distributions.length(); i++) {
@@ -39,10 +39,11 @@ public class JsonObjectToDataSetMapper {
                 if(distribution.has("license")) {
                     JSONObject licnese = distribution.getJSONObject("license");
                     if(licnese.has("uri"))
-                        dataSetDTO.getLicense().add(licnese.getString("uri"));
+                        licenses.add(licnese.getString("uri"));
                 }
             }
         }
+        dataSetDTO.setLicense(new ArrayList<>(licenses));
     }
 
     private static void setPublisherName(JSONObject dataSetJsonObject, DataSetDTO dataSetDTO) {
