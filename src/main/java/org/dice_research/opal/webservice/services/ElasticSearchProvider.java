@@ -109,12 +109,24 @@ public class ElasticSearchProvider {
     }
 
     public List<FilterDTO> getFilters(SearchDTO searchDTO) {
+        return searchDTO.getFilters().length > 0 ?
+                updateRelativeCountOfAllFilters(searchDTO) :
+                generateFilters(searchDTO);
+    }
+
+    private List<FilterDTO> updateRelativeCountOfAllFilters(SearchDTO searchDTO) {
+        Arrays.stream(searchDTO.getFilters()).forEach(
+                filterDTO -> updateRelativeCount(searchDTO, filterDTO.getSearchField(), filterDTO.getValues()));
+        return Arrays.asList(searchDTO.getFilters());
+    }
+
+    private List<FilterDTO> generateFilters(SearchDTO searchDTO) {
         List<FilterDTO> ret = new ArrayList<>();
         try {
             ret.add(getFilterListOfThemes(searchDTO));
             ret.add(getFilterListOfPublishers(searchDTO));
             ret.add(getFilterListOfLicenses(searchDTO));
-            ret.add(getIssueDateFilter());
+//            ret.add(getIssueDateFilter());
         } catch (IOException e) {
             log.error("", e);
         }
@@ -129,13 +141,8 @@ public class ElasticSearchProvider {
             FilterDTO filterDTO = optionalFilterDTO.get();
             List<ValueDTO> values = calculateTopValues(searchDTO, filterDTO.getSearchField(), containsText);
 
-            //update absoluteCount
-            values.forEach(v ->
-                    v.getCount().setAbsolute(calculateTheAbsoluteCount(searchDTO, filterDTO.getSearchField(), v.getValue())));
-
-            //update relativeCount
-            values.forEach(v ->
-                    v.getCount().setRelative(calculateTheRelativeCount(searchDTO, filterDTO.getSearchField(), v.getValue())));
+            updateRelativeCount(searchDTO, filterDTO.getSearchField(), values);
+            updateAbsoluteCount(searchDTO, filterDTO.getSearchField(), values);
 
             filterDTO.setValues(values);
             return filterDTO;
@@ -182,15 +189,8 @@ public class ElasticSearchProvider {
         String searchField = "themes";
         List<ValueDTO> values = getTopThemeValues();
 
-        //update relativeCount
-        values.forEach(v ->
-                v.getCount().setRelative(calculateTheRelativeCount(searchDTO, searchField,
-                        themeConfiguration.getRevMap().get(v.getValue()))));
-
-        //update absoluteCount
-        values.forEach(v ->
-                v.getCount().setAbsolute(calculateTheAbsoluteCount(searchDTO, searchField,
-                        themeConfiguration.getRevMap().get(v.getValue()))));
+        updateRelativeCount(searchDTO, searchField, values);
+        updateAbsoluteCount(searchDTO, searchField, values);
 
         return FilterDTO.builder().filterGroupTitle("Theme").hasExternalLink(true).hasStaticValues(false).values(values)
                 .searchField(searchField).build();
@@ -200,13 +200,9 @@ public class ElasticSearchProvider {
         String searchField = "distributions.license.uri.keyword";
         List<ValueDTO> values = calculateTopValues(searchDTO, searchField, null);
 
-        //update absoluteCount
-        values.forEach(v ->
-                v.getCount().setAbsolute(calculateTheAbsoluteCount(searchDTO, searchField, v.getValue())));
+        updateRelativeCount(searchDTO, searchField, values);
+        updateAbsoluteCount(searchDTO, searchField, values);
 
-        //update relativeCount
-        values.forEach(v ->
-                v.getCount().setRelative(calculateTheRelativeCount(searchDTO, searchField, v.getValue())));
         return FilterDTO.builder().filterGroupTitle("License").hasExternalLink(true).hasStaticValues(false).values(values)
                 .searchField(searchField).build();
     }
@@ -215,16 +211,23 @@ public class ElasticSearchProvider {
         String searchField = "publisher.name.keyword";
         List<ValueDTO> values = calculateTopValues(searchDTO, searchField, null);
 
+        updateRelativeCount(searchDTO, searchField, values);
+        updateAbsoluteCount(searchDTO, searchField, values);
 
-        //update absoluteCount
-        values.forEach(v ->
-                v.getCount().setAbsolute(calculateTheAbsoluteCount(searchDTO, searchField, v.getValue())));
-
-        //update relativeCount
-        values.forEach(v ->
-                v.getCount().setRelative(calculateTheRelativeCount(searchDTO, searchField, v.getValue())));
         return FilterDTO.builder().filterGroupTitle("Publisher").hasExternalLink(true).hasStaticValues(false).values(values)
                 .searchField(searchField).build();
+    }
+
+    private void updateRelativeCount(SearchDTO searchDTO, String searchField, List<ValueDTO> values) {
+        values.forEach(v ->
+                v.getCount().setRelative(calculateTheRelativeCount(searchDTO, searchField,
+                        searchField.equals("themes") ? themeConfiguration.getRevMap().get(v.getValue()) : v.getValue())));
+    }
+
+    private void updateAbsoluteCount(SearchDTO searchDTO, String searchField, List<ValueDTO> values) {
+        values.forEach(v ->
+                v.getCount().setAbsolute(calculateTheAbsoluteCount(searchDTO, searchField,
+                        searchField.equals("themes") ? themeConfiguration.getRevMap().get(v.getValue()) : v.getValue())));
     }
 
     private List<ValueDTO> getTopThemeValues() {
@@ -414,7 +417,7 @@ public class ElasticSearchProvider {
                 (selectedRangeValues.getGte().equals("-1") && selectedRangeValues.getLte().equals("-1")))
             return null;
 
-        RangeQueryBuilder range = QueryBuilders.rangeQuery(getFieldName(filterDTO.getSearchField()));
+        RangeQueryBuilder range = QueryBuilders.rangeQuery(filterDTO.getSearchField());
         if (!selectedRangeValues.getGte().equals("-1")) range.gte(selectedRangeValues.getGte());
         if (!selectedRangeValues.getLte().equals("-1")) range.lte(selectedRangeValues.getLte() + "||+1d");
         return range;
@@ -424,31 +427,18 @@ public class ElasticSearchProvider {
         if (filterDTO.getValues() == null || filterDTO.getValues().isEmpty() ||
                 filterDTO.getValues().stream().noneMatch(ValueDTO::getSelected)
         ) return null;
-        String fieldName = getFieldName(filterDTO.getSearchField());
+        String fieldName = filterDTO.getSearchField();
         BoolQueryBuilder filterQueryBuilder = QueryBuilders.boolQuery();
         for (ValueDTO v : filterDTO.getValues()) {
             if(v.getSelected())
-                filterQueryBuilder.should(QueryBuilders.matchQuery(fieldName, v.getValue()));
+                filterQueryBuilder.should(QueryBuilders.matchQuery(fieldName,
+                        fieldName.equals("themes") ? themeConfiguration.getRevMap().get(v.getValue()) :v.getValue()));
         }
         filterQueryBuilder.minimumShouldMatch(1);
 
         if (filterDTO.getSearchField().contains("."))
             return QueryBuilders.nestedQuery(calculateNestedPath(filterDTO.getSearchField()), filterQueryBuilder, ScoreMode.Avg);
         return filterQueryBuilder;
-    }
-
-    private String getFieldName(String searchField) {
-//        switch (searchField) {
-//            case "http://www.w3.org/ns/dcat#theme":
-//                return "themes";
-//            case "http://purl.org/dc/terms/publisher":
-//                return "publisher.uri";
-//            case "http://purl.org/dc/terms/creator":
-//                return "creator.uri";
-//            case "http://purl.org/dc/terms/license":
-//                return "distributions.license.uri.keyword";
-//        } todo probably we can remove this function
-        return searchField;
     }
 
     private QueryBuilder getSearchKeyQuery(String searchKey, String[] searchIn) {
