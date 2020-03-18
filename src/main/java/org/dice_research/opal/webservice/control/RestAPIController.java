@@ -2,6 +2,7 @@ package org.dice_research.opal.webservice.control;
 
 import org.dice_research.opal.webservice.model.dto.DataSetDTO;
 import org.dice_research.opal.webservice.model.dto.FilterDTO;
+import org.dice_research.opal.webservice.model.dto.OrderByDTO;
 import org.dice_research.opal.webservice.model.dto.SearchDTO;
 import org.dice_research.opal.webservice.model.entity.DataSet;
 import org.dice_research.opal.webservice.services.ElasticSearchProvider;
@@ -29,11 +30,10 @@ public class RestAPIController {
     @CrossOrigin
     @PostMapping("/dataSets/getNumberOfRelatedDataSets")
     public Long getNumberOFRelatedDataSets(
-            @RequestParam(name = "uri", required = false, defaultValue = "0") String uri,
+            @RequestParam(name = "uri", required = false) String uri,
             @RequestBody(required = false) SearchDTO searchDTO
     ) {
-        return null;
-//        return provider.getNumberOfRelatedDataSets(uri, searchDTO.getOrderBy(), searchDTO.getFilters());
+        return provider.getNumberOfRelatedDataSets(searchDTO, uri);
     }
 
     @CrossOrigin
@@ -49,12 +49,21 @@ public class RestAPIController {
     @CrossOrigin
     @PostMapping("/dataSets/getRelatedSubList")
     public List<DataSetDTO> getSubListOfRelatedDataSets(
-            @RequestParam(name = "uri", required = false, defaultValue = "0") String uri,
-            @RequestParam(name = "low", required = false, defaultValue = "0") Long low,
-            @RequestParam(name = "limit", required = false, defaultValue = "10") Long limit,
+            @RequestParam(name = "uri", required = false) String uri,
+            @RequestParam(name = "low", required = false, defaultValue = "0") Integer low,
+            @RequestParam(name = "limit", required = false, defaultValue = "10") Integer limit,
             @RequestBody(required = false) SearchDTO searchDTO
     ) {
-        return null;
+        return provider.getSubListOfRelatedDataSets(searchDTO, uri, low, limit);
+    }
+
+    @CrossOrigin
+    @PostMapping("/filters/listFoRelated")
+    public List<FilterDTO> getFiltersForRelatedDataSets(
+            @RequestParam(name = "uri", required = false) String uri,
+            @RequestBody(required = false) SearchDTO searchDTO
+    ) {
+        return provider.getFilters(searchDTO, uri);
     }
 
     @CrossOrigin
@@ -68,17 +77,18 @@ public class RestAPIController {
     public List<FilterDTO> getFilters(
             @RequestBody SearchDTO searchDTO
     ) {
-        return provider.getFilters(searchDTO);
+        return provider.getFilters(searchDTO, null);
     }
 
     @CrossOrigin
     @PostMapping("/filteredOptions")
     public FilterDTO getFilter(
             @RequestBody(required = false) SearchDTO searchDTO,
-            @RequestParam(required = false) String filterGroupTitle,
-            @RequestParam(required = false) String containsText
+            @RequestParam(name="uri", required = false) String uri,
+            @RequestParam(name="filterGroupTitle", required = false) String filterGroupTitle,
+            @RequestParam(name="containsText", required = false) String containsText
     ) {
-        return provider.getTopFiltersThatContain(searchDTO, filterGroupTitle, containsText);
+        return provider.getTopFiltersThatContain(searchDTO, uri, filterGroupTitle, containsText);
     }
 
 }

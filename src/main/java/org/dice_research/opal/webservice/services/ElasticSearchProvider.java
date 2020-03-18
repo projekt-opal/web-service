@@ -108,24 +108,24 @@ public class ElasticSearchProvider {
         return ret;
     }
 
-    public List<FilterDTO> getFilters(SearchDTO searchDTO) {
+    public List<FilterDTO> getFilters(SearchDTO searchDTO, String uri) {
         return searchDTO.getFilters().length > 0 ?
-                updateRelativeCountOfAllFilters(searchDTO) :
-                generateFilters(searchDTO);
+                updateRelativeCountOfAllFilters(searchDTO, uri) :
+                generateFilters(searchDTO, uri);
     }
 
-    private List<FilterDTO> updateRelativeCountOfAllFilters(SearchDTO searchDTO) {
+    private List<FilterDTO> updateRelativeCountOfAllFilters(SearchDTO searchDTO, String uri) {
         Arrays.stream(searchDTO.getFilters()).forEach(
-                filterDTO -> updateRelativeCount(searchDTO, filterDTO.getSearchField(), filterDTO.getValues()));
+                filterDTO -> updateRelativeCount(searchDTO, uri, filterDTO.getSearchField(), filterDTO.getValues()));
         return Arrays.asList(searchDTO.getFilters());
     }
 
-    private List<FilterDTO> generateFilters(SearchDTO searchDTO) {
+    private List<FilterDTO> generateFilters(SearchDTO searchDTO, String uri) {
         List<FilterDTO> ret = new ArrayList<>();
         try {
-            ret.add(getFilterListOfThemes(searchDTO));
-            ret.add(getFilterListOfPublishers(searchDTO));
-            ret.add(getFilterListOfLicenses(searchDTO));
+            ret.add(getFilterListOfThemes(searchDTO, uri));
+            ret.add(getFilterListOfPublishers(searchDTO, uri));
+            ret.add(getFilterListOfLicenses(searchDTO, uri));
 //            ret.add(getIssueDateFilter());
         } catch (IOException e) {
             log.error("", e);
@@ -133,7 +133,7 @@ public class ElasticSearchProvider {
         return ret;
     }
 
-    public FilterDTO getTopFiltersThatContain(SearchDTO searchDTO, String filterGroupTitle, String containsText) {
+    public FilterDTO getTopFiltersThatContain(SearchDTO searchDTO, String uri, String filterGroupTitle, String containsText) {
         try {
             Optional<FilterDTO> optionalFilterDTO = Arrays.stream(searchDTO.getFilters())
                     .filter(f -> f.getFilterGroupTitle().equals(filterGroupTitle)).findFirst();
@@ -141,8 +141,8 @@ public class ElasticSearchProvider {
             FilterDTO filterDTO = optionalFilterDTO.get();
             List<ValueDTO> values = calculateTopValues(searchDTO, filterDTO.getSearchField(), containsText);
 
-            updateRelativeCount(searchDTO, filterDTO.getSearchField(), values);
-            updateAbsoluteCount(searchDTO, filterDTO.getSearchField(), values);
+            updateRelativeCount(searchDTO, uri, filterDTO.getSearchField(), values);
+            updateAbsoluteCount(searchDTO, uri, filterDTO.getSearchField(), values);
 
             filterDTO.setValues(values);
             return filterDTO;
@@ -163,7 +163,7 @@ public class ElasticSearchProvider {
             searchRequest.source(searchSourceBuilder);
 
             SearchResponse searchResponse = restHighLevelClient.search(searchRequest, RequestOptions.DEFAULT);
-            if(searchResponse.getHits().getTotalHits().value >= 1) {
+            if (searchResponse.getHits().getTotalHits().value >= 1) {
                 SearchHit[] hits = searchResponse.getHits().getHits();
                 SearchHit hit = hits[0];
                 String sourceAsString = hit.getSourceAsString();
@@ -180,53 +180,127 @@ public class ElasticSearchProvider {
         return null;
     }
 
+    public Long getNumberOfRelatedDataSets(SearchDTO searchDTO, String uri) {
+
+        try {
+            DataSet dataSet = getDataSet(uri);
+            if (dataSet == null) return 0L;
+
+            SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+            searchSourceBuilder.size(0);
+
+            BoolQueryBuilder query = QueryBuilders.boolQuery();
+
+            List<QueryBuilder> filtersQueries = getFiltersQueries(searchDTO.getFilters());
+            filtersQueries.forEach(query::must);
+
+            addRelatedQuery(dataSet, query);
+
+            searchSourceBuilder.query(query);
+            SearchRequest searchRequest = new SearchRequest();
+            searchRequest.source(searchSourceBuilder);
+
+            SearchResponse searchResponse = restHighLevelClient.search(searchRequest, RequestOptions.DEFAULT);
+            return searchResponse.getHits().getTotalHits().value;
+        } catch (IOException e) {
+            log.error("", e);
+        }
+        return -1L;
+    }
+
+    private void addRelatedQuery(DataSet dataSet, BoolQueryBuilder query) {
+        query.minimumShouldMatch(1);
+        if (dataSet.getTitle() != null)
+            query.should(QueryBuilders.matchQuery("title", dataSet.getTitle()));
+        if (dataSet.getTitle_de() != null)
+            query.should(QueryBuilders.matchQuery("title_de", dataSet.getTitle_de()));
+        if (dataSet.getKeywords() != null)
+            dataSet.getKeywords().forEach(k -> query.should(QueryBuilders.matchQuery("keywords", k)));
+        if (dataSet.getKeywords_de() != null)
+            dataSet.getKeywords_de().forEach(k -> query.should(QueryBuilders.matchQuery("keywords_de", k)));
+    }
+
+    public List<DataSetDTO> getSubListOfRelatedDataSets(SearchDTO searchDTO, String uri, Integer low, Integer limit) {
+        List<DataSetDTO> ret = new ArrayList<>();
+        try {
+            DataSet dataSet = getDataSet(uri);
+            if (dataSet == null) return ret;
+
+            SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+            searchSourceBuilder.from(low);
+            searchSourceBuilder.size(limit);
+
+            BoolQueryBuilder query = QueryBuilders.boolQuery();
+
+            List<QueryBuilder> filtersQueries = getFiltersQueries(searchDTO.getFilters());
+            filtersQueries.forEach(query::must);
+
+            addRelatedQuery(dataSet, query);
+
+            searchSourceBuilder.query(query);
+            SearchRequest searchRequest = new SearchRequest();
+            searchRequest.source(searchSourceBuilder);
+
+            SearchResponse searchResponse = restHighLevelClient.search(searchRequest, RequestOptions.DEFAULT);
+            for (SearchHit hit : searchResponse.getHits()) {
+                String sourceAsString = hit.getSourceAsString();
+                JSONObject jsonObject = new JSONObject(sourceAsString);
+                DataSetDTO dataSetDTO = JsonObjectToDataSetMapper.toDataSetLongViewDTO(jsonObject);
+                ret.add(dataSetDTO);
+            }
+        } catch (IOException e) {
+            log.error("", e);
+        }
+        return ret;
+    }
+
     private FilterDTO getIssueDateFilter() {
         return FilterDTO.builder().filterGroupTitle("Issue Date").searchField("issued")
                 .hasExternalLink(false).hasStaticValues(true).selectedRangeValues(new RangeDTO()).build();
     }
 
-    private FilterDTO getFilterListOfThemes(SearchDTO searchDTO) {
+    private FilterDTO getFilterListOfThemes(SearchDTO searchDTO, String uri) {
         String searchField = "themes";
         List<ValueDTO> values = getTopThemeValues();
 
-        updateRelativeCount(searchDTO, searchField, values);
-        updateAbsoluteCount(searchDTO, searchField, values);
+        updateRelativeCount(searchDTO, uri, searchField, values);
+        updateAbsoluteCount(searchDTO, uri, searchField, values);
 
-        return FilterDTO.builder().filterGroupTitle("Theme").hasExternalLink(true).hasStaticValues(false).values(values)
+        return FilterDTO.builder().filterGroupTitle("Theme").hasExternalLink(true).hasStaticValues(true).values(values)
                 .searchField(searchField).build();
     }
 
-    private FilterDTO getFilterListOfLicenses(SearchDTO searchDTO) throws IOException {
+    private FilterDTO getFilterListOfLicenses(SearchDTO searchDTO, String uri) throws IOException {
         String searchField = "distributions.license.uri.keyword";
         List<ValueDTO> values = calculateTopValues(searchDTO, searchField, null);
 
-        updateRelativeCount(searchDTO, searchField, values);
-        updateAbsoluteCount(searchDTO, searchField, values);
+        updateRelativeCount(searchDTO, uri, searchField, values);
+        updateAbsoluteCount(searchDTO, uri, searchField, values);
 
         return FilterDTO.builder().filterGroupTitle("License").hasExternalLink(true).hasStaticValues(false).values(values)
                 .searchField(searchField).build();
     }
 
-    private FilterDTO getFilterListOfPublishers(SearchDTO searchDTO) throws IOException {
+    private FilterDTO getFilterListOfPublishers(SearchDTO searchDTO, String uri) throws IOException {
         String searchField = "publisher.name.keyword";
         List<ValueDTO> values = calculateTopValues(searchDTO, searchField, null);
 
-        updateRelativeCount(searchDTO, searchField, values);
-        updateAbsoluteCount(searchDTO, searchField, values);
+        updateRelativeCount(searchDTO, uri, searchField, values);
+        updateAbsoluteCount(searchDTO, uri, searchField, values);
 
         return FilterDTO.builder().filterGroupTitle("Publisher").hasExternalLink(true).hasStaticValues(false).values(values)
                 .searchField(searchField).build();
     }
 
-    private void updateRelativeCount(SearchDTO searchDTO, String searchField, List<ValueDTO> values) {
+    private void updateRelativeCount(SearchDTO searchDTO, String uri, String searchField, List<ValueDTO> values) {
         values.forEach(v ->
-                v.getCount().setRelative(calculateTheRelativeCount(searchDTO, searchField,
-                        searchField.equals("themes") ? themeConfiguration.getRevMap().get(v.getValue()) : v.getValue())));
+                v.getCount().setRelative(calculateTheRelativeCount(searchDTO, uri,
+                        searchField, searchField.equals("themes") ? themeConfiguration.getRevMap().get(v.getValue()) : v.getValue())));
     }
 
-    private void updateAbsoluteCount(SearchDTO searchDTO, String searchField, List<ValueDTO> values) {
+    private void updateAbsoluteCount(SearchDTO searchDTO, String uri, String searchField, List<ValueDTO> values) {
         values.forEach(v ->
-                v.getCount().setAbsolute(calculateTheAbsoluteCount(searchDTO, searchField,
+                v.getCount().setAbsolute(calculateTheAbsoluteCount(searchDTO, uri, searchField,
                         searchField.equals("themes") ? themeConfiguration.getRevMap().get(v.getValue()) : v.getValue())));
     }
 
@@ -266,13 +340,19 @@ public class ElasticSearchProvider {
         return values;
     }
 
-    private int calculateTheAbsoluteCount(SearchDTO searchDTO, String fieldQuery, String value) {
+    private int calculateTheAbsoluteCount(SearchDTO searchDTO, String uri, String fieldQuery, String value) {
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         searchSourceBuilder.size(0);
         BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery();
 
         QueryBuilder searchKeyQuery = getSearchKeyQuery(searchDTO.getSearchKey(), searchDTO.getSearchIn());
         boolQueryBuilder.must(searchKeyQuery);
+
+        if (uri != null) {
+            DataSet dataSet = getDataSet(uri);
+            if (dataSet != null)
+                addRelatedQuery(dataSet, boolQueryBuilder);
+        }
 
         TermQueryBuilder query = QueryBuilders.termQuery(fieldQuery, value);
         if (fieldQuery.contains(".")) {
@@ -298,7 +378,7 @@ public class ElasticSearchProvider {
 
     }
 
-    private int calculateTheRelativeCount(SearchDTO searchDTO, String fieldQuery, String value) {
+    private int calculateTheRelativeCount(SearchDTO searchDTO, String uri, String fieldQuery, String value) {
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         searchSourceBuilder.size(0);
         BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery();
@@ -308,6 +388,12 @@ public class ElasticSearchProvider {
 
         List<QueryBuilder> filtersQueries = getFiltersQueries(searchDTO.getFilters());
         filtersQueries.forEach(boolQueryBuilder::must);
+
+        if (uri != null) {
+            DataSet dataSet = getDataSet(uri);
+            if (dataSet != null)
+                addRelatedQuery(dataSet, boolQueryBuilder);
+        }
 
         TermQueryBuilder query = QueryBuilders.termQuery(fieldQuery, value);
         if (fieldQuery.contains(".")) {
@@ -430,9 +516,9 @@ public class ElasticSearchProvider {
         String fieldName = filterDTO.getSearchField();
         BoolQueryBuilder filterQueryBuilder = QueryBuilders.boolQuery();
         for (ValueDTO v : filterDTO.getValues()) {
-            if(v.getSelected())
+            if (v.getSelected())
                 filterQueryBuilder.should(QueryBuilders.matchQuery(fieldName,
-                        fieldName.equals("themes") ? themeConfiguration.getRevMap().get(v.getValue()) :v.getValue()));
+                        fieldName.equals("themes") ? themeConfiguration.getRevMap().get(v.getValue()) : v.getValue()));
         }
         filterQueryBuilder.minimumShouldMatch(1);
 
