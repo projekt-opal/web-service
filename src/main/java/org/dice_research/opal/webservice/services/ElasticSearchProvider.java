@@ -21,6 +21,7 @@ import org.elasticsearch.search.aggregations.bucket.nested.ParsedNested;
 import org.elasticsearch.search.aggregations.bucket.terms.ParsedStringTerms;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.elasticsearch.search.sort.*;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -83,7 +84,17 @@ public class ElasticSearchProvider {
             BoolQueryBuilder qb = QueryBuilders.boolQuery();
             QueryBuilder searchKeyQuery = getSearchKeyQuery(searchDTO.getSearchKey(), searchDTO.getSearchIn());
             List<QueryBuilder> filtersQueries = getFiltersQueries(searchDTO.getFilters());
-            List<QueryBuilder> orderByQueries = getOrderBy(searchDTO); // TODO: 3/4/20 for the ones using sort maybe more code is needed
+            List<QueryBuilder> orderByQueries = getOrderBy(searchDTO);
+            if(searchDTO.getOrderBy().getSelectedOrderValue().equals("location")) {
+                GeoDistanceSortBuilder geoDistanceSortBuilder = SortBuilders.geoDistanceSort("spatial.geometry",
+                        searchDTO.getOrderBy().getLatitude(), searchDTO.getOrderBy().getLongitude());
+//                geoDistanceSortBuilder.setNestedPath("spatial");
+                NestedSortBuilder nestedSort = new NestedSortBuilder("spatial");
+                geoDistanceSortBuilder.setNestedSort(nestedSort);
+
+                searchSourceBuilder.sort(geoDistanceSortBuilder);
+            }
+
 
             qb.must(searchKeyQuery);
             filtersQueries.forEach(qb::must);
@@ -472,7 +483,6 @@ public class ElasticSearchProvider {
             ret.add(QueryBuilders.matchQuery("title_de", searchDTO.getSearchKey()));
             return ret;
         }
-        // TODO: 3/4/20 For issue date and location sort must be used
         return ret;
     }
 
