@@ -21,7 +21,9 @@ import org.elasticsearch.search.aggregations.bucket.nested.ParsedNested;
 import org.elasticsearch.search.aggregations.bucket.terms.ParsedStringTerms;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
-import org.elasticsearch.search.sort.*;
+import org.elasticsearch.search.sort.GeoDistanceSortBuilder;
+import org.elasticsearch.search.sort.NestedSortBuilder;
+import org.elasticsearch.search.sort.SortBuilders;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -84,8 +86,8 @@ public class ElasticSearchProvider {
             BoolQueryBuilder qb = QueryBuilders.boolQuery();
             QueryBuilder searchKeyQuery = getSearchKeyQuery(searchDTO.getSearchKey(), searchDTO.getSearchIn());
             List<QueryBuilder> filtersQueries = getFiltersQueries(searchDTO.getFilters());
-            List<QueryBuilder> orderByQueries = getOrderBy(searchDTO);
-            if(searchDTO.getOrderBy().getSelectedOrderValue().equals("location")) {
+
+            if (searchDTO.getOrderBy().getSelectedOrderValue().equals("location")) {
                 GeoDistanceSortBuilder geoDistanceSortBuilder = SortBuilders.geoDistanceSort("spatial.geometry",
                         searchDTO.getOrderBy().getLatitude(), searchDTO.getOrderBy().getLongitude());
 //                geoDistanceSortBuilder.setNestedPath("spatial");
@@ -93,13 +95,14 @@ public class ElasticSearchProvider {
                 geoDistanceSortBuilder.setNestedSort(nestedSort);
 
                 searchSourceBuilder.sort(geoDistanceSortBuilder);
+            } else {
+                List<QueryBuilder> orderByQueries = getOrderBy(searchDTO);
+                orderByQueries.forEach(qb::should);
             }
 
 
             qb.must(searchKeyQuery);
             filtersQueries.forEach(qb::must);
-            orderByQueries.forEach(qb::should);
-
             searchSourceBuilder.query(qb);
 
             searchRequest.indices("opal");
@@ -241,14 +244,26 @@ public class ElasticSearchProvider {
             searchSourceBuilder.from(low);
             searchSourceBuilder.size(limit);
 
-            BoolQueryBuilder query = QueryBuilders.boolQuery();
+            BoolQueryBuilder qb = QueryBuilders.boolQuery();
 
             List<QueryBuilder> filtersQueries = getFiltersQueries(searchDTO.getFilters());
-            filtersQueries.forEach(query::must);
+            filtersQueries.forEach(qb::must);
 
-            addRelatedQuery(dataSet, query);
+            if (searchDTO.getOrderBy().getSelectedOrderValue().equals("location")) {
+                GeoDistanceSortBuilder geoDistanceSortBuilder = SortBuilders.geoDistanceSort("spatial.geometry",
+                        searchDTO.getOrderBy().getLatitude(), searchDTO.getOrderBy().getLongitude());
+//                geoDistanceSortBuilder.setNestedPath("spatial");
+                NestedSortBuilder nestedSort = new NestedSortBuilder("spatial");
+                geoDistanceSortBuilder.setNestedSort(nestedSort);
 
-            searchSourceBuilder.query(query);
+                searchSourceBuilder.sort(geoDistanceSortBuilder);
+            } else {
+                List<QueryBuilder> orderByQueries = getOrderBy(searchDTO);
+                orderByQueries.forEach(qb::should);
+            }
+            addRelatedQuery(dataSet, qb);
+
+            searchSourceBuilder.query(qb);
             SearchRequest searchRequest = new SearchRequest();
             searchRequest.source(searchSourceBuilder);
 
