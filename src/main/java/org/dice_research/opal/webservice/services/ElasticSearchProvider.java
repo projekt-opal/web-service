@@ -548,7 +548,7 @@ public class ElasticSearchProvider {
             }
             else
                 fieldNames = Arrays.asList("title", "title_de", "description", "description_de", "keywords", "keywords_de");
-            return QueryBuilders.multiMatchQuery(searchKey, fieldNames.toArray(new String[0]));
+            return QueryBuilders.multiMatchQuery(searchKey, fieldNames.toArray(new String[0])).fuzziness(1);
         }
     }
 }
