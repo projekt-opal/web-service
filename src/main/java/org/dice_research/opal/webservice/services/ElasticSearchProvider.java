@@ -232,6 +232,7 @@ public class ElasticSearchProvider {
             dataSet.getKeywords().forEach(k -> query.should(QueryBuilders.matchQuery("keywords", k)));
         if (dataSet.getKeywords_de() != null)
             dataSet.getKeywords_de().forEach(k -> query.should(QueryBuilders.matchQuery("keywords_de", k)));
+        query.mustNot(QueryBuilders.termQuery("uri", dataSet.getUri()));
     }
 
     public List<DataSetDTO> getSubListOfRelatedDataSets(SearchDTO searchDTO, String uri, Integer low, Integer limit) {
