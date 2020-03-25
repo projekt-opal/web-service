@@ -1,7 +1,7 @@
 package org.dice_research.opal.webservice.model.mapper;
 
 import lombok.extern.slf4j.Slf4j;
-import org.dice_research.opal.webservice.model.dto.DataSetDTO;
+import org.dice_research.opal.webservice.model.entity.dto.DataSetDTO;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;

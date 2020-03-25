@@ -4,7 +4,7 @@ import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.lucene.search.join.ScoreMode;
 import org.dice_research.opal.webservice.config.ThemeConfiguration;
-import org.dice_research.opal.webservice.model.dto.*;
+import org.dice_research.opal.webservice.model.entity.dto.*;
 import org.dice_research.opal.webservice.model.entity.DataSet;
 import org.dice_research.opal.webservice.model.mapper.JsonObjectToDataSetMapper;
 import org.elasticsearch.action.search.SearchRequest;

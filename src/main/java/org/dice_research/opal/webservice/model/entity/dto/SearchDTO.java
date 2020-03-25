@@ -1,4 +1,4 @@
-package org.dice_research.opal.webservice.model.dto;
+package org.dice_research.opal.webservice.model.entity.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;

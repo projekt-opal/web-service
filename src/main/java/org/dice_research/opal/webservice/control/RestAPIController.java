@@ -1,9 +1,8 @@
 package org.dice_research.opal.webservice.control;
 
-import org.dice_research.opal.webservice.model.dto.DataSetDTO;
-import org.dice_research.opal.webservice.model.dto.FilterDTO;
-import org.dice_research.opal.webservice.model.dto.OrderByDTO;
-import org.dice_research.opal.webservice.model.dto.SearchDTO;
+import org.dice_research.opal.webservice.model.entity.dto.DataSetDTO;
+import org.dice_research.opal.webservice.model.entity.dto.FilterDTO;
+import org.dice_research.opal.webservice.model.entity.dto.SearchDTO;
 import org.dice_research.opal.webservice.model.entity.DataSet;
 import org.dice_research.opal.webservice.services.ElasticSearchProvider;
 import org.springframework.beans.factory.annotation.Autowired;
