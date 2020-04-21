@@ -1,11 +1,11 @@
-package org.dice_research.opal.webservice.model.dto;
+package org.dice_research.opal.webservice.model.entity.dto;
 
 import lombok.Data;
 
 import java.util.List;
 
 @Data
-public class DataSetLongViewDTO {
+public class DataSetDTO {
     private String uri;
     private String title;
     private String description;

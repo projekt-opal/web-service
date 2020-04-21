@@ -1,9 +1,10 @@
 package org.dice_research.opal.webservice.control;
 
-import org.dice_research.opal.webservice.model.dto.*;
-import org.dice_research.opal.webservice.utility.DataProvider;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.dice_research.opal.webservice.model.entity.dto.DataSetDTO;
+import org.dice_research.opal.webservice.model.entity.dto.FilterDTO;
+import org.dice_research.opal.webservice.model.entity.dto.SearchDTO;
+import org.dice_research.opal.webservice.model.entity.DataSet;
+import org.dice_research.opal.webservice.services.ElasticSearchProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -12,93 +13,81 @@ import java.util.List;
 @RestController
 public class RestAPIController {
 
-    private static final Logger logger = LoggerFactory.getLogger(RestAPIController.class);
-
-    private final DataProvider provider;
+    private final ElasticSearchProvider provider;
 
     @Autowired
-    public RestAPIController(DataProvider provider) {
+    public RestAPIController(ElasticSearchProvider provider) {
         this.provider = provider;
     }
 
     @CrossOrigin
     @PostMapping("/dataSets/getNumberOfDataSets")
-    public Long getNumberOFDataSets(
-            @RequestParam(name = "searchKey", required = false, defaultValue = "") String searchKey,
-            @RequestParam(name = "searchIn", required = false) String[] searchIn,
-            @RequestBody(required = false) SearchDTO searchDTO
-    ) {
-        return provider.getNumberOfDataSets(searchKey, searchIn,
-                searchDTO.getOrderByDTO(),  searchDTO.getFilterDTOS());
+    public Long getNumberOFDataSets(@RequestBody() SearchDTO searchDTO) {
+        return provider.getNumberOfDataSets(searchDTO);
     }
 
     @CrossOrigin
     @PostMapping("/dataSets/getNumberOfRelatedDataSets")
-    public Long getNumberOFDataSets(
-            @RequestParam(name = "uri", required = false, defaultValue = "0") String uri,
+    public Long getNumberOFRelatedDataSets(
+            @RequestParam(name = "uri", required = false) String uri,
             @RequestBody(required = false) SearchDTO searchDTO
     ) {
-        return provider.getNumberOfRelatedDataSets(uri, searchDTO.getOrderByDTO(),  searchDTO.getFilterDTOS());
+        return provider.getNumberOfRelatedDataSets(searchDTO, uri);
     }
 
     @CrossOrigin
     @PostMapping("/dataSets/getSubList")
-    public List<DataSetLongViewDTO> getSubListOfDataSets(
-            @RequestParam(name = "searchKey", required = false, defaultValue = "") String searchKey,
-            @RequestParam(name = "searchIn", required = false) String[] searchIn,
-            @RequestParam(name = "low", required = false, defaultValue = "0") Long low,
-            @RequestParam(name = "limit", required = false, defaultValue = "10") Long limit,
-            @RequestBody(required = false)  SearchDTO searchDTO
+    public List<DataSetDTO> getSubListOfDataSets(
+            @RequestParam(name = "low", required = false, defaultValue = "0") Integer low,
+            @RequestParam(name = "limit", required = false, defaultValue = "10") Integer limit,
+            @RequestBody(required = false) SearchDTO searchDTO
     ) {
-        return provider.getSubListOfDataSets(searchKey, low, limit, searchIn,
-                searchDTO.getOrderByDTO(), searchDTO.getFilterDTOS());
+        return provider.getSublistOfDataSets(searchDTO, low, limit);
     }
 
     @CrossOrigin
     @PostMapping("/dataSets/getRelatedSubList")
-    public List<DataSetLongViewDTO> getSubListOfRelatedDataSets(
-            @RequestParam(name = "uri", required = false, defaultValue = "0") String uri,
-            @RequestParam(name = "low", required = false, defaultValue = "0") Long low,
-            @RequestParam(name = "limit", required = false, defaultValue = "10") Long limit,
-            @RequestBody(required = false)  SearchDTO searchDTO
+    public List<DataSetDTO> getSubListOfRelatedDataSets(
+            @RequestParam(name = "uri", required = false) String uri,
+            @RequestParam(name = "low", required = false, defaultValue = "0") Integer low,
+            @RequestParam(name = "limit", required = false, defaultValue = "10") Integer limit,
+            @RequestBody(required = false) SearchDTO searchDTO
     ) {
-        return provider.getSubRelatedListOfDataSets(uri, low, limit,
-                searchDTO.getOrderByDTO(), searchDTO.getFilterDTOS());
+        return provider.getSubListOfRelatedDataSets(searchDTO, uri, low, limit);
+    }
+
+    @CrossOrigin
+    @PostMapping("/filters/listFoRelated")
+    public List<FilterDTO> getFiltersForRelatedDataSets(
+            @RequestParam(name = "uri", required = false) String uri,
+            @RequestBody(required = false) SearchDTO searchDTO
+    ) {
+        return provider.getFilters(searchDTO, uri);
     }
 
     @CrossOrigin
     @GetMapping("/dataSet")
-    public DataSetDTO getDataSet(@RequestParam(name = "uri", required = false) String uri) {
+    public DataSet getDataSet(@RequestParam(name = "uri", required = false) String uri) {
         return provider.getDataSet(uri);
     }
 
     @CrossOrigin
-    @GetMapping("/filters/list")
+    @PostMapping("/filters/list")
     public List<FilterDTO> getFilters(
-            @RequestParam(name = "searchKey", required = false, defaultValue = "") String searchKey,
-            @RequestParam(name = "searchIn", required = false) String[] searchIn) {
-        return provider.getFilters(searchKey, searchIn);
-    }
-
-    // TODO: 10/1/19 An DTO for the RequestBody is needed
-    @CrossOrigin
-    @PostMapping("/filter/count")
-    public Long getCount(
-            @RequestParam(required = false) String searchKey,
-            @RequestParam(required = false) String[] searchIn,
-            @RequestBody(required = false) FilterValueCountDTO filterValueCountDTO
+            @RequestBody SearchDTO searchDTO
     ) {
-        return provider.getCountOfFilterValue(filterValueCountDTO.getFilterUri(), filterValueCountDTO.getValueUri(), searchKey, searchIn);
+        return provider.getFilters(searchDTO, null);
     }
 
     @CrossOrigin
-    @GetMapping("/filteredOptions")
+    @PostMapping("/filteredOptions")
     public FilterDTO getFilter(
-            @RequestParam(required = false) String filterText,
-            @RequestParam(required = false) String searchKey,
-            @RequestParam(required = false) String[] searchIn,
-            @RequestParam(required = false) String filterType) {
-        return provider.getTopFilterOptions(filterType, searchKey, searchIn, filterText);
+            @RequestBody(required = false) SearchDTO searchDTO,
+            @RequestParam(name="uri", required = false) String uri,
+            @RequestParam(name="filterGroupTitle", required = false) String filterGroupTitle,
+            @RequestParam(name="containsText", required = false) String containsText
+    ) {
+        return provider.getTopFiltersThatContain(searchDTO, uri, filterGroupTitle, containsText);
     }
 
 }

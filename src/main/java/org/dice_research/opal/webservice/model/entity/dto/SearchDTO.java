@@ -1,24 +1,22 @@
-package org.dice_research.opal.webservice.model.dto;
+package org.dice_research.opal.webservice.model.entity.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import lombok.Builder;
 import lombok.Data;
 
-import java.util.List;
-
 @Data
-@Builder
-public class FilterDTO {
+public class SearchDTO {
 
     @JsonFormat(with = JsonFormat.Feature.ACCEPT_CASE_INSENSITIVE_PROPERTIES)
-    private String uri;
+    private String searchKey;
     @JsonFormat(with = JsonFormat.Feature.ACCEPT_CASE_INSENSITIVE_PROPERTIES)
-    private String title;
+    private String[] searchIn;
     @JsonFormat(with = JsonFormat.Feature.ACCEPT_CASE_INSENSITIVE_PROPERTIES)
-    private List<FilterValueDTO> values;
+    private OrderByDTO orderBy;
     @JsonFormat(with = JsonFormat.Feature.ACCEPT_CASE_INSENSITIVE_PROPERTIES)
-    private Boolean externalLink;
-    @JsonFormat(with = JsonFormat.Feature.ACCEPT_CASE_INSENSITIVE_PROPERTIES)
-    private Boolean isTypeStatic;
+    private FilterDTO[] filters;
 
+    public SearchDTO() {
+        searchIn = new String[0];
+        filters = new FilterDTO[0];
+    }
 }
