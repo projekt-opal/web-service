@@ -7,7 +7,9 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.springframework.stereotype.Component;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 
 @Component
 @Slf4j
@@ -32,13 +34,13 @@ public class JsonObjectToDataSetMapper {
 
     private static void setLicenses(JSONObject dataSetJsonObject, DataSetDTO dataSetDTO) {
         Set<String> licenses = new HashSet<>();
-        if(dataSetJsonObject.has("distributions")) {
+        if (dataSetJsonObject.has("distributions")) {
             JSONArray distributions = dataSetJsonObject.getJSONArray("distributions");
             for (int i = 0; i < distributions.length(); i++) {
                 JSONObject distribution = distributions.getJSONObject(i);
-                if(distribution.has("license")) {
+                if (distribution.has("license")) {
                     JSONObject licnese = distribution.getJSONObject("license");
-                    if(licnese.has("uri"))
+                    if (licnese.has("uri"))
                         licenses.add(licnese.getString("uri"));
                 }
             }
@@ -48,8 +50,8 @@ public class JsonObjectToDataSetMapper {
 
     private static void setPublisherName(JSONObject dataSetJsonObject, DataSetDTO dataSetDTO) {
         try {
-            if(dataSetJsonObject.has("publisher"))
-                if(dataSetJsonObject.getJSONObject("publisher").has("name"))
+            if (dataSetJsonObject.has("publisher"))
+                if (dataSetJsonObject.getJSONObject("publisher").has("name"))
                     dataSetDTO.setPublisherName(dataSetJsonObject.getJSONObject("publisher").getString("name"));
         } catch (JSONException e) {
             log.error("", e);

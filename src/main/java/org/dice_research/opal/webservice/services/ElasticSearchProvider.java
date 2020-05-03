@@ -4,8 +4,8 @@ import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.lucene.search.join.ScoreMode;
 import org.dice_research.opal.webservice.config.ThemeConfiguration;
-import org.dice_research.opal.webservice.model.entity.dto.*;
 import org.dice_research.opal.webservice.model.entity.DataSet;
+import org.dice_research.opal.webservice.model.entity.dto.*;
 import org.dice_research.opal.webservice.model.mapper.JsonObjectToDataSetMapper;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
@@ -26,6 +26,7 @@ import org.elasticsearch.search.sort.NestedSortBuilder;
 import org.elasticsearch.search.sort.SortBuilders;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -40,6 +41,9 @@ public class ElasticSearchProvider {
 
     private final RestHighLevelClient restHighLevelClient;
     private final ThemeConfiguration themeConfiguration;
+
+    @Value("${ES_INDEX}")
+    private String es_index;
 
     @Autowired
     public ElasticSearchProvider(RestHighLevelClient restHighLevelClient, ThemeConfiguration themeConfiguration) {
@@ -63,7 +67,7 @@ public class ElasticSearchProvider {
 
             searchSourceBuilder.query(qb);
 
-            searchRequest.indices("opal");
+            searchRequest.indices(es_index);
             searchRequest.source(searchSourceBuilder);
 
             SearchResponse search = restHighLevelClient.search(searchRequest, RequestOptions.DEFAULT);
@@ -105,7 +109,7 @@ public class ElasticSearchProvider {
             filtersQueries.forEach(qb::must);
             searchSourceBuilder.query(qb);
 
-            searchRequest.indices("opal");
+            searchRequest.indices(es_index);
             searchRequest.source(searchSourceBuilder);
 
             SearchResponse search = restHighLevelClient.search(searchRequest, RequestOptions.DEFAULT);
@@ -346,7 +350,7 @@ public class ElasticSearchProvider {
     private List<ValueDTO> calculateTopValues(SearchDTO searchDTO, String searchField, String containsText) throws IOException {
         List<ValueDTO> values = new ArrayList<>();
         SearchRequest searchRequest = new SearchRequest();
-        searchRequest.indices("opal");
+        searchRequest.indices(es_index);
 
         SearchSourceBuilder searchSourceBuilder = generateTopQuery(searchDTO, searchField, containsText);
         searchRequest.source(searchSourceBuilder);
@@ -393,7 +397,7 @@ public class ElasticSearchProvider {
         searchSourceBuilder.query(boolQueryBuilder);
 
         SearchRequest searchRequest = new SearchRequest();
-        searchRequest.indices("opal");
+        searchRequest.indices(es_index);
         searchRequest.source(searchSourceBuilder);
         try {
             SearchResponse searchResponse = restHighLevelClient.search(searchRequest, RequestOptions.DEFAULT);
@@ -432,7 +436,7 @@ public class ElasticSearchProvider {
         searchSourceBuilder.query(boolQueryBuilder);
 
         SearchRequest searchRequest = new SearchRequest();
-        searchRequest.indices("opal");
+        searchRequest.indices(es_index);
         searchRequest.source(searchSourceBuilder);
         try {
             SearchResponse searchResponse = restHighLevelClient.search(searchRequest, RequestOptions.DEFAULT);

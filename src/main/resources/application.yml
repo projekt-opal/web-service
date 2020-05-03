@@ -4,12 +4,6 @@ server:
 spring:
   elasticsearch:
     rest:
-      uris: http://localhost:9200
-
-opalinfo:
-    tripleStore:
-      url: http://${OPAL_TRIPLESTORE_URL}:3030/opal/query
-      username: ${OPAL_TRIPLESTORE_USERNAME}
-      password: ${OPAL_TRIPLESTORE_PASSWORD}
+      uris: http://${OPAL_ELASTICSEARCH_URL:localhost}:${OPAL_ELASTICSEARCH_PORT:9200}
 
 management.health.elasticsearch.enabled: false
