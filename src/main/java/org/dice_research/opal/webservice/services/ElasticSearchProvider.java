@@ -20,6 +20,8 @@ import org.elasticsearch.search.aggregations.bucket.nested.NestedAggregationBuil
 import org.elasticsearch.search.aggregations.bucket.nested.ParsedNested;
 import org.elasticsearch.search.aggregations.bucket.terms.ParsedStringTerms;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms;
+import org.elasticsearch.search.aggregations.metrics.Cardinality;
+import org.elasticsearch.search.aggregations.metrics.CardinalityAggregationBuilder;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.sort.GeoDistanceSortBuilder;
 import org.elasticsearch.search.sort.NestedSortBuilder;
@@ -67,15 +69,21 @@ public class ElasticSearchProvider {
 
             searchSourceBuilder.query(qb);
 
+            CardinalityAggregationBuilder cardinalityAggregationBuilder =
+                    AggregationBuilders.cardinality("aggs_number_of_datasets").precisionThreshold(100).field("uri");
+
+            searchSourceBuilder.aggregation(cardinalityAggregationBuilder);
+
             searchRequest.indices(es_index);
             searchRequest.source(searchSourceBuilder);
 
-            SearchResponse search = restHighLevelClient.search(searchRequest, RequestOptions.DEFAULT);
-            return search.getHits().getTotalHits().value;
+            SearchResponse searchResponse = restHighLevelClient.search(searchRequest, RequestOptions.DEFAULT);
+            Cardinality cardinality = searchResponse.getAggregations().get("aggs_number_of_datasets");
+            return cardinality.getValue();
         } catch (IOException e) {
             log.error("", e);
-            return -1L;
         }
+        return -1L;
     }
 
     public List<DataSetDTO> getSublistOfDataSets(SearchDTO searchDTO, Integer low, Integer limit) {
@@ -127,15 +135,24 @@ public class ElasticSearchProvider {
     }
 
     public List<FilterDTO> getFilters(SearchDTO searchDTO, String uri) {
-        return searchDTO.getFilters().length > 0 ?
-                updateRelativeCountOfAllFilters(searchDTO, uri) :
-                generateFilters(searchDTO, uri);
+        if (searchDTO.getFilters().length == 0)
+            return generateFilters(searchDTO, uri);
+        updateRelativeCountOfAllFilters(searchDTO, uri);
+        updateAbsoluteCountOfAllFilters(searchDTO, uri);
+        return Arrays.asList(searchDTO.getFilters());
     }
 
-    private List<FilterDTO> updateRelativeCountOfAllFilters(SearchDTO searchDTO, String uri) {
+    private void updateAbsoluteCountOfAllFilters(SearchDTO searchDTO, String uri) {
+        Arrays.stream(searchDTO.getFilters()).forEach(filterDTO ->
+                filterDTO.getValues().forEach(v ->
+                        v.getCount().setAbsolute(calculateTheAbsoluteCount(searchDTO, uri, filterDTO.getSearchField(),
+                                filterDTO.getSearchField().equals("themes") ? themeConfiguration.getRevMap().get(v.getValue()) : v.getValue())))
+        );
+    }
+
+    private void updateRelativeCountOfAllFilters(SearchDTO searchDTO, String uri) {
         Arrays.stream(searchDTO.getFilters()).forEach(
                 filterDTO -> updateRelativeCount(searchDTO, uri, filterDTO.getSearchField(), filterDTO.getValues()));
-        return Arrays.asList(searchDTO.getFilters());
     }
 
     private List<FilterDTO> generateFilters(SearchDTO searchDTO, String uri) {
@@ -185,8 +202,6 @@ public class ElasticSearchProvider {
                 SearchHit[] hits = searchResponse.getHits().getHits();
                 SearchHit hit = hits[0];
                 String sourceAsString = hit.getSourceAsString();
-//                JSONObject jsonObject = new JSONObject(sourceAsString);
-//                DataSetLongViewDTO dataSetDTO = JsonObjectToDataSetMapper.toDataSetDTO(jsonObject);
                 DataSet dataSet = new Gson().fromJson(sourceAsString, DataSet.class);
                 return dataSet;
             }
@@ -215,11 +230,19 @@ public class ElasticSearchProvider {
             addRelatedQuery(dataSet, query);
 
             searchSourceBuilder.query(query);
+
+
+            CardinalityAggregationBuilder cardinalityAggregationBuilder =
+                    AggregationBuilders.cardinality("aggs_number_of_datasets").precisionThreshold(100).field("uri");
+            searchSourceBuilder.aggregation(cardinalityAggregationBuilder);
+
+
             SearchRequest searchRequest = new SearchRequest();
             searchRequest.source(searchSourceBuilder);
 
             SearchResponse searchResponse = restHighLevelClient.search(searchRequest, RequestOptions.DEFAULT);
-            return searchResponse.getHits().getTotalHits().value;
+            Cardinality cardinality = searchResponse.getAggregations().get("aggs_number_of_datasets");
+            return cardinality.getValue();
         } catch (IOException e) {
             log.error("", e);
         }
@@ -371,7 +394,7 @@ public class ElasticSearchProvider {
         return values;
     }
 
-    private int calculateTheAbsoluteCount(SearchDTO searchDTO, String uri, String fieldQuery, String value) {
+    private long calculateTheAbsoluteCount(SearchDTO searchDTO, String uri, String fieldQuery, String value) {
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         searchSourceBuilder.size(0);
         BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery();
@@ -396,12 +419,18 @@ public class ElasticSearchProvider {
 
         searchSourceBuilder.query(boolQueryBuilder);
 
+
+        CardinalityAggregationBuilder cardinalityAggregationBuilder =
+                AggregationBuilders.cardinality("aggs_number_of_datasets").precisionThreshold(100).field("uri");
+        searchSourceBuilder.aggregation(cardinalityAggregationBuilder);
+
         SearchRequest searchRequest = new SearchRequest();
         searchRequest.indices(es_index);
         searchRequest.source(searchSourceBuilder);
         try {
             SearchResponse searchResponse = restHighLevelClient.search(searchRequest, RequestOptions.DEFAULT);
-            return (int) searchResponse.getHits().getTotalHits().value;
+            Cardinality cardinality = searchResponse.getAggregations().get("aggs_number_of_datasets");
+            return cardinality.getValue();
         } catch (IOException e) {
             log.error("", e);
             return -1;
@@ -409,7 +438,7 @@ public class ElasticSearchProvider {
 
     }
 
-    private int calculateTheRelativeCount(SearchDTO searchDTO, String uri, String fieldQuery, String value) {
+    private long calculateTheRelativeCount(SearchDTO searchDTO, String uri, String fieldQuery, String value) {
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         searchSourceBuilder.size(0);
         BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery();
@@ -435,12 +464,18 @@ public class ElasticSearchProvider {
 
         searchSourceBuilder.query(boolQueryBuilder);
 
+
+        CardinalityAggregationBuilder cardinalityAggregationBuilder =
+                AggregationBuilders.cardinality("aggs_number_of_datasets").precisionThreshold(100).field("uri");
+        searchSourceBuilder.aggregation(cardinalityAggregationBuilder);
+
         SearchRequest searchRequest = new SearchRequest();
         searchRequest.indices(es_index);
         searchRequest.source(searchSourceBuilder);
         try {
             SearchResponse searchResponse = restHighLevelClient.search(searchRequest, RequestOptions.DEFAULT);
-            return (int) searchResponse.getHits().getTotalHits().value;
+            Cardinality cardinality = searchResponse.getAggregations().get("aggs_number_of_datasets");
+            return cardinality.getValue();
         } catch (IOException e) {
             log.error("", e);
             return -1;
