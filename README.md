@@ -7,7 +7,7 @@ It provides data for the [web-ui](https://github.com/projekt-opal/web-ui).
 
 ## Notes
 
-- API REST methods can be found in [RestAPIController](master/src/main/java/org/dice_research/opal/webservice/control/RestAPIController.java).
+- API REST methods can be found in [RestAPIController](src/main/java/org/dice_research/opal/webservice/control/RestAPIController.java).
 - Development notes are in the [wiki](https://github.com/projekt-opal/web-service/wiki).
 
 
