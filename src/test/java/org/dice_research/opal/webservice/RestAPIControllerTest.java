@@ -16,19 +16,22 @@ import org.junit.jupiter.api.Test;
 class RestAPIControllerTest {
 
 	private RestAPIController restAPIController;
-	private DataSet berlinUm1940wms;
 
 	@BeforeEach
 	void setUp() {
 		restAPIController = new RestAPIController(ElasticSearchProviderTest.createElasticSearchProvider());
-		berlinUm1940wms = restAPIController.getDataSet(ElasticSearchProviderTest.BERLIN_UM_1940_WMS);
+	}
+
+	/**
+	 * Tests getting a specific dataset.
+	 */
+	@Test
+	public void testGetDataset() {
+		DataSet berlinUm1940wms = restAPIController.getDataSet(ElasticSearchProviderTest.BERLIN_UM_1940_WMS);
 
 		// Only execute tests if the dataset exists
 		Assume.assumeNotNull(berlinUm1940wms);
-	}
 
-	@Test
-	void test() {
 		Assert.assertEquals("Berlin um 1940 - [WMS]", berlinUm1940wms.getTitle());
 	}
 }

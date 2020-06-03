@@ -1,8 +1,13 @@
 package org.dice_research.opal.webservice;
 
+import java.util.List;
+
 import org.apache.http.HttpHost;
 import org.dice_research.opal.webservice.config.ThemeConfiguration;
 import org.dice_research.opal.webservice.model.entity.DataSet;
+import org.dice_research.opal.webservice.model.entity.dto.FilterDTO;
+import org.dice_research.opal.webservice.model.entity.dto.OrderByDTO;
+import org.dice_research.opal.webservice.model.entity.dto.SearchDTO;
 import org.dice_research.opal.webservice.services.ElasticSearchProvider;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestHighLevelClient;
@@ -19,19 +24,56 @@ class ElasticSearchProviderTest {
 	public static final String BERLIN_UM_1940_WMS = "http://projekt-opal.de/dataset/3e71cf21852472e10462ab4fe97e679d";
 
 	private ElasticSearchProvider elasticSearchProvider;
-	private DataSet berlinUm1940wms;
+
+	/**
+	 * Creates a {@link ElasticSearchProvider} instance.
+	 */
+	public static ElasticSearchProvider createElasticSearchProvider() {
+
+		// Set host and port
+		RestHighLevelClient restHighLevelClient = new RestHighLevelClient(RestClient.builder(new HttpHost(
+				TestConfiguration.getElasticsearchUrl(), TestConfiguration.getElasticsearchPort(), "http")));
+
+		// Does not contain themes by simply creating instance
+		ThemeConfiguration themeConfiguration = new ThemeConfiguration();
+
+		ElasticSearchProvider elasticSearchProvider = new ElasticSearchProvider(restHighLevelClient,
+				themeConfiguration);
+
+		// Set index
+		elasticSearchProvider.es_index = TestConfiguration.getElasticsearchIndex();
+
+		return elasticSearchProvider;
+	}
+
+	/**
+	 * Calls the getFilters method like it is called by the UI at first time.
+	 * 
+	 * {"searchKey":"","searchIn":[],"orderBy":{"selectedOrderValue":"relevance"},"filters":[]}
+	 */
+	public static List<FilterDTO> getInitialFilters(ElasticSearchProvider elasticSearchProvider) {
+		SearchDTO searchDTO = new SearchDTO();
+		searchDTO.setSearchKey("");
+		searchDTO.setSearchIn(new String[0]);
+		OrderByDTO orderByDTO = new OrderByDTO();
+		orderByDTO.setSelectedOrderValue("relevance");
+		searchDTO.setOrderBy(orderByDTO);
+		searchDTO.setFilters(new FilterDTO[0]);
+		return elasticSearchProvider.getFilters(searchDTO, null);
+	}
 
 	@BeforeEach
 	void setUp() throws Exception {
 		elasticSearchProvider = createElasticSearchProvider();
-		berlinUm1940wms = elasticSearchProvider.getDataSet(BERLIN_UM_1940_WMS);
-
-		// Only execute tests if the dataset exists
-		Assume.assumeNotNull(berlinUm1940wms);
 	}
 
+	/**
+	 * Tests getting a specific dataset.
+	 */
 	@Test
-	void test() {
+	public void testGetDataset() {
+		DataSet berlinUm1940wms = elasticSearchProvider.getDataSet(BERLIN_UM_1940_WMS);
+		Assume.assumeNotNull(berlinUm1940wms);
 		Assert.assertEquals("Berlin um 1940 - [WMS]", berlinUm1940wms.getTitle());
 
 		// TODO 2019-08-13T13:34:24.766691
@@ -40,13 +82,21 @@ class ElasticSearchProviderTest {
 		// System.out.println(berlinUm1940wms.getModified());
 	}
 
-	public static ElasticSearchProvider createElasticSearchProvider() {
-		RestHighLevelClient restHighLevelClient = new RestHighLevelClient(RestClient.builder(new HttpHost(
-				TestConfiguration.getElasticsearchUrl(), TestConfiguration.getElasticsearchPort(), "http")));
+	/**
+	 * Tests if filters are created.
+	 */
+	@Test
+	public void testInitialFilters() {
+		List<FilterDTO> filters = getInitialFilters(elasticSearchProvider);
 
-		// TODO Create proper instance
-		ThemeConfiguration themeConfiguration = new ThemeConfiguration();
+		Assert.assertNotNull("Initial filters not null", filters);
+		Assert.assertTrue("Initial filters not empty", !filters.isEmpty());
 
-		return new ElasticSearchProvider(restHighLevelClient, themeConfiguration);
+		// For printing set true
+		if (Boolean.FALSE) {
+			for (FilterDTO filterDTO : filters) {
+				System.out.println(filterDTO + " " + ElasticSearchProviderTest.class.getName());
+			}
+		}
 	}
 }
