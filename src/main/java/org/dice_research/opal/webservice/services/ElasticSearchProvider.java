@@ -45,7 +45,7 @@ public class ElasticSearchProvider {
     private final ThemeConfiguration themeConfiguration;
 
     @Value("${ES_INDEX}")
-    private String es_index;
+    public String es_index;
 
     @Autowired
     public ElasticSearchProvider(RestHighLevelClient restHighLevelClient, ThemeConfiguration themeConfiguration) {
