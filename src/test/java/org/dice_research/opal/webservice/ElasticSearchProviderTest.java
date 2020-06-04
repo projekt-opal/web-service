@@ -47,7 +47,8 @@ class ElasticSearchProviderTest {
 	}
 
 	/**
-	 * Calls the getFilters method like it is called by the UI at first time.
+	 * Calls {@link ElasticSearchProvider#getFilters(SearchDTO, String)} like it is
+	 * called by the UI at first time.
 	 * 
 	 * {"searchKey":"","searchIn":[],"orderBy":{"selectedOrderValue":"relevance"},"filters":[]}
 	 */
@@ -83,7 +84,8 @@ class ElasticSearchProviderTest {
 	}
 
 	/**
-	 * Tests if filters are created.
+	 * Tests if filters are created. Calls
+	 * {@link ElasticSearchProvider#getFilters(SearchDTO, String)}.
 	 */
 	@Test
 	public void testInitialFilters() {
@@ -93,7 +95,7 @@ class ElasticSearchProviderTest {
 		Assert.assertTrue("Initial filters not empty", !filters.isEmpty());
 
 		// For printing set true
-		if (Boolean.FALSE) {
+		if (Boolean.TRUE) {
 			for (FilterDTO filterDTO : filters) {
 				System.out.println(filterDTO + " " + ElasticSearchProviderTest.class.getName());
 			}
