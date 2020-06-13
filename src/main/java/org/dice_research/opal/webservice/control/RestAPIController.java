@@ -29,7 +29,7 @@ public class RestAPIController {
     @CrossOrigin
     @PostMapping("/dataSets/getNumberOfRelatedDataSets")
     public Long getNumberOFRelatedDataSets(
-            @RequestParam(name = "uri", required = false) String uri,
+            @RequestParam(name = "uri") String uri,
             @RequestBody(required = false) SearchDTO searchDTO
     ) {
         return provider.getNumberOfRelatedDataSets(searchDTO, uri);

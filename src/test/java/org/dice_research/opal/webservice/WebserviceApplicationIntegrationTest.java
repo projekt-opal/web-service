@@ -15,9 +15,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.boot.web.server.LocalServerPort;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.ClassPathResource;
-import org.springframework.test.context.ActiveProfiles;
+import org.springframework.http.MediaType;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.testcontainers.containers.FixedHostPortGenericContainer;
 import org.testcontainers.containers.GenericContainer;
@@ -30,13 +30,13 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
+@Profile("integration-test")
 @ExtendWith(SpringExtension.class)
 @Testcontainers
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
         properties = {
                 "ES_INDEX:opal_test"
         })
-@ActiveProfiles("test")
 public class WebserviceApplicationIntegrationTest {
 
     // will be shared between test methods
@@ -51,8 +51,6 @@ public class WebserviceApplicationIntegrationTest {
         ELASTICSEARCH_CONTAINER.start();
     }
 
-    @LocalServerPort
-    private int port;
     @Autowired
     private TestRestTemplate restTemplate;
 
@@ -73,7 +71,7 @@ public class WebserviceApplicationIntegrationTest {
         HttpClient httpclient = HttpClients.createDefault();
         HttpHead httpHead = new HttpHead("http://localhost:9200/");
         int cnt = 0;
-        while (cnt++ < 1000) { //maximum bound to prevent infinite loop
+        while (cnt++ < 100) { //maximum bound to prevent infinite loop
             try {
                 Thread.sleep(1000); //reduce wait time in each iteration
                 httpclient.execute(httpHead);
@@ -87,8 +85,8 @@ public class WebserviceApplicationIntegrationTest {
         HttpClient httpclient = HttpClients.createDefault();
         HttpPut httpPut = new HttpPut("http://localhost:9200/opal_test");
 
-        httpPut.setHeader("Accept", "application/json");
-        httpPut.setHeader("Content-Type", "application/json");
+        httpPut.setHeader("Accept", MediaType.APPLICATION_JSON_VALUE);
+        httpPut.setHeader("Content-Type", MediaType.APPLICATION_JSON_VALUE);
 
         File file = new ClassPathResource("mappings.json").getFile();
         byte[] bytes = Files.readAllBytes(Paths.get(file.getAbsolutePath()));
@@ -116,8 +114,7 @@ public class WebserviceApplicationIntegrationTest {
     @Test
     public void testGetNumberOFDataSets() {
         SearchDTO searchDTO = new SearchDTO();
-        String url = "http://localhost:" + port + "/dataSets/getNumberOfDataSets";
-        Long numberOfDataSets = restTemplate.postForObject(url, searchDTO, Long.class);
+        Long numberOfDataSets = restTemplate.postForObject("/dataSets/getNumberOfDataSets", searchDTO, Long.class);
         Assertions.assertEquals(16L, numberOfDataSets, "number of return dataset is not correct");
     }
 
