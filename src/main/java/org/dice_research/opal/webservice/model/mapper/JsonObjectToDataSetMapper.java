@@ -39,6 +39,7 @@ public class JsonObjectToDataSetMapper {
             for (int i = 0; i < distributions.length(); i++) {
                 JSONObject distribution = distributions.getJSONObject(i);
                 if (distribution.has("license") && distribution.get("license") instanceof JSONObject) {
+                    log.info(distribution.toString());
                     JSONObject licnese = distribution.getJSONObject("license");
                     if (licnese.has("uri"))
                         licenses.add(licnese.getString("uri"));
