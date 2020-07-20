@@ -43,6 +43,8 @@ public class ElasticSearchProvider {
 
     private final RestHighLevelClient restHighLevelClient;
     private final ThemeConfiguration themeConfiguration;
+    
+    private static final int LIST_MAX_RESULTS = 300;
 
     @Value("${ES_INDEX}")
     private String es_index;
@@ -251,12 +253,13 @@ public class ElasticSearchProvider {
 
     private void addRelatedQuery(DataSet dataSet, BoolQueryBuilder query) {
         query.minimumShouldMatch(1);
+        List<String> filteredMaxkw =  dataSet.getKeywords().subList(0, LIST_MAX_RESULTS);
         if (dataSet.getTitle() != null)
             query.should(QueryBuilders.matchQuery("title", dataSet.getTitle()));
         if (dataSet.getTitle_de() != null)
             query.should(QueryBuilders.matchQuery("title_de", dataSet.getTitle_de()));
-        if (dataSet.getKeywords() != null)
-            dataSet.getKeywords().forEach(k -> query.should(QueryBuilders.matchQuery("keywords", k)));
+        if (filteredMaxkw != null)
+        	filteredMaxkw.forEach(k -> query.should(QueryBuilders.matchQuery("keywords", k)));
         if (dataSet.getKeywords_de() != null)
             dataSet.getKeywords_de().forEach(k -> query.should(QueryBuilders.matchQuery("keywords_de", k)));
         query.mustNot(QueryBuilders.termQuery("uri", dataSet.getUri()));
@@ -347,9 +350,10 @@ public class ElasticSearchProvider {
     }
 
     private void updateRelativeCount(SearchDTO searchDTO, String uri, String searchField, List<ValueDTO> values) {
+    	
         values.forEach(v ->
-                v.getCount().setRelative(calculateTheRelativeCount(searchDTO, uri,
-                        searchField, searchField.equals("themes") ? themeConfiguration.getRevMap().get(v.getValue()) : v.getValue())));
+               v.getCount().setRelative(calculateTheRelativeCount(searchDTO, uri,
+                     searchField, searchField.equals("themes") ? themeConfiguration.getRevMap().get(v.getValue()) : v.getValue())));
     }
 
     private void updateAbsoluteCount(SearchDTO searchDTO, String uri, String searchField, List<ValueDTO> values) {
