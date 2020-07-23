@@ -4,12 +4,6 @@ import lombok.Data;
 
 @Data
 public class Spatial {
-    private GeoLocation geometry;
+    private String geometry;
     private String tag;
-}
-
-@Data
-class GeoLocation {
-    private double lat;
-    private double lon;
 }

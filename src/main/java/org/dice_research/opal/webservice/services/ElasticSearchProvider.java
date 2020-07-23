@@ -253,11 +253,13 @@ public class ElasticSearchProvider {
 
     private void addRelatedQuery(DataSet dataSet, BoolQueryBuilder query) {
         query.minimumShouldMatch(1);
-        List<String> filteredMaxkw =  dataSet.getKeywords().subList(0, LIST_MAX_RESULTS);
         if (dataSet.getTitle() != null)
             query.should(QueryBuilders.matchQuery("title", dataSet.getTitle()));
         if (dataSet.getTitle_de() != null)
             query.should(QueryBuilders.matchQuery("title_de", dataSet.getTitle_de()));
+        List<String> filteredMaxkw = null;
+        if (dataSet.getKeywords() != null)
+            filteredMaxkw = dataSet.getKeywords().subList(0, LIST_MAX_RESULTS);
         if (filteredMaxkw != null)
         	filteredMaxkw.forEach(k -> query.should(QueryBuilders.matchQuery("keywords", k)));
         if (dataSet.getKeywords_de() != null)
