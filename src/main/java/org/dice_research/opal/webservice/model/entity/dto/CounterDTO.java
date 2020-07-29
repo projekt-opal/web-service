@@ -10,4 +10,18 @@ import lombok.NoArgsConstructor;
 public class CounterDTO {
     private long absolute;
     private long relative;
+
+	@Override
+	public String toString() {
+		StringBuilder stringBuilder = new StringBuilder();
+		stringBuilder.append(getClass().getSimpleName());
+
+		stringBuilder.append(" absolute: ");
+		stringBuilder.append(absolute);
+
+		stringBuilder.append(", relative: ");
+		stringBuilder.append(relative);
+
+		return stringBuilder.toString();
+	}
 }
