@@ -1,9 +1,0 @@
-server:
-  port: 8081
-
-spring:
-  elasticsearch:
-    rest:
-      uris: http://${OPAL_ELASTICSEARCH_URL:localhost}:${OPAL_ELASTICSEARCH_PORT:9200}
-
-management.health.elasticsearch.enabled: false
