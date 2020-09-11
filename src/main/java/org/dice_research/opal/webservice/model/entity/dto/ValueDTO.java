@@ -1,5 +1,7 @@
 package org.dice_research.opal.webservice.model.entity.dto;
 
+import java.util.ArrayList;
+
 import com.fasterxml.jackson.annotation.JsonFormat;
 
 import lombok.AllArgsConstructor;
@@ -16,6 +18,10 @@ public class ValueDTO {
 	private CounterDTO count;
 	@JsonFormat(with = JsonFormat.Feature.ACCEPT_CASE_INSENSITIVE_PROPERTIES)
 	private Boolean selected = false;
+    @JsonFormat(with = JsonFormat.Feature.ACCEPT_CASE_INSENSITIVE_PROPERTIES)
+    private ArrayList<String> mostUsedDataFormats = new ArrayList<String>();
+    @JsonFormat(with = JsonFormat.Feature.ACCEPT_CASE_INSENSITIVE_PROPERTIES)
+    private ArrayList<String> mostUsedDataCategories = new ArrayList<String>();
 
 	@Override
 	public String toString() {
