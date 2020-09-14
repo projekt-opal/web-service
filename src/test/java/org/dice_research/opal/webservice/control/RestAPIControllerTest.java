@@ -131,13 +131,13 @@ public class RestAPIControllerTest {
         List<FilterDTO> filterDTOList = Arrays.asList(
                 FilterDTO.builder().filterGroupTitle("Theme").searchField("themes").hasExternalLink(true).hasStaticValues(true)
                         .values(Arrays.asList(
-                                new ValueDTO("Economy and finance", new CounterDTO(787, 64), false),
-                                new ValueDTO("Agriculture, fisheries, forestry and food", new CounterDTO(1322, 45), false)
+                                new ValueDTO("Economy and finance", new CounterDTO(787, 64), false, null, null),
+                                new ValueDTO("Agriculture, fisheries, forestry and food", new CounterDTO(1322, 45), false, null, null)
                         )).build(),
                 FilterDTO.builder().filterGroupTitle("License").searchField("distributions.license.uri.keyword").hasExternalLink(true).hasStaticValues(false)
                         .values(Arrays.asList(
-                                new ValueDTO("http://reference.data.gov.uk/id/open-government-licence", new CounterDTO(530, 68), false),
-                                new ValueDTO("http://dcat-ap.de/def/licenses/dl-by-de/2.0", new CounterDTO(500, 100), false)
+                                new ValueDTO("http://reference.data.gov.uk/id/open-government-licence", new CounterDTO(530, 68), false, null, null),
+                                new ValueDTO("http://dcat-ap.de/def/licenses/dl-by-de/2.0", new CounterDTO(500, 100), false, null, null)
                         )).build()
         );
         String jsonContent = new Gson().toJson(filterDTOList);
@@ -186,13 +186,13 @@ public class RestAPIControllerTest {
         List<FilterDTO> filterDTOList = Arrays.asList(
                 FilterDTO.builder().filterGroupTitle("Theme").searchField("themes").hasExternalLink(true).hasStaticValues(true)
                         .values(Arrays.asList(
-                                new ValueDTO("Economy and finance", new CounterDTO(787, 787), false),
-                                new ValueDTO("Agriculture, fisheries, forestry and food", new CounterDTO(1322, 1322), false)
+                                new ValueDTO("Economy and finance", new CounterDTO(787, 787), false, null, null),
+                                new ValueDTO("Agriculture, fisheries, forestry and food", new CounterDTO(1322, 1322), false, null, null)
                         )).build(),
                 FilterDTO.builder().filterGroupTitle("License").searchField("distributions.license.uri.keyword").hasExternalLink(true).hasStaticValues(false)
                         .values(Arrays.asList(
-                                new ValueDTO("http://reference.data.gov.uk/id/open-government-licence", new CounterDTO(530, 530), false),
-                                new ValueDTO("http://dcat-ap.de/def/licenses/dl-by-de/2.0", new CounterDTO(500, 500), false)
+                                new ValueDTO("http://reference.data.gov.uk/id/open-government-licence", new CounterDTO(530, 530), false, null, null),
+                                new ValueDTO("http://dcat-ap.de/def/licenses/dl-by-de/2.0", new CounterDTO(500, 500), false, null, null)
                         )).build()
         );
         String jsonContent = new Gson().toJson(filterDTOList);
@@ -219,7 +219,7 @@ public class RestAPIControllerTest {
 
         FilterDTO filterDTO = FilterDTO.builder().filterGroupTitle("License").searchField("distributions.license.uri.keyword")
                 .hasExternalLink(true).hasStaticValues(true).values(Arrays.asList(
-                        new ValueDTO("http://dcat-ap.de/def/licenses/dl-by-de/2.0", new CounterDTO(500, 500), false)
+                        new ValueDTO("http://dcat-ap.de/def/licenses/dl-by-de/2.0", new CounterDTO(500, 500), false, null, null)
                 )).build();
 
         String jsonContent = new Gson().toJson(filterDTO);
