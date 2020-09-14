@@ -452,9 +452,11 @@ public class ElasticSearchProvider {
                 .nestedQuery("publisher", 
                         
                         QueryBuilders.matchQuery(
-                                "publisher.name",publisherName), mode
+                                "publisher.name",publisherName)
+                        			.operator(MatchQueryBuilder.DEFAULT_OPERATOR.AND)
+                        			.autoGenerateSynonymsPhraseQuery(false)
+                        			.fuzzyTranspositions(false), mode
                         ));
-        
         searchRequest.source(searchSourceBuilder);
 
         try {
@@ -467,7 +469,7 @@ public class ElasticSearchProvider {
 //                System.out.println(bucket.getKey()+": "+bucket.getDocCount());
                 mostUsedDataFormats.add((String) bucket.getKey());
             } 
-            return new ArrayList<String>(mostUsedDataFormats.subList(0, 3));
+            return mostUsedDataFormats;
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -495,7 +497,10 @@ public class ElasticSearchProvider {
                 .nestedQuery("publisher", 
                         
                         QueryBuilders.matchQuery(
-                                "publisher.name",publisherName), mode
+                                "publisher.name",publisherName)
+	                        .operator(MatchQueryBuilder.DEFAULT_OPERATOR.AND)
+	            			.autoGenerateSynonymsPhraseQuery(false)
+	            			.fuzzyTranspositions(false), mode
                         ));
         
         searchRequest.source(searchSourceBuilder);
@@ -509,7 +514,7 @@ public class ElasticSearchProvider {
                 mostUsedDataCategories.add((String) bucket.getKey());
             }
             
-            return new ArrayList<String>(mostUsedDataCategories.subList(0, 3));
+            return mostUsedDataCategories;
         } catch (IOException e) {
             e.printStackTrace();
         }
