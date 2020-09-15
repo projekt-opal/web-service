@@ -164,14 +164,14 @@ class ElasticSearchProviderTest {
         FilterDTO[] filterDTOList = new FilterDTO[]{
                 FilterDTO.builder().filterGroupTitle("Theme").searchField("themes").hasExternalLink(true).hasStaticValues(true)
                         .values(Arrays.asList(
-                                new ValueDTO("Economy and finance", new CounterDTO(787, 64), true),
-                                new ValueDTO("Agriculture, fisheries, forestry and food", new CounterDTO(1322, 45), false),
-                                new ValueDTO("Government and public sector", new CounterDTO(1, 1), true)
+                                new ValueDTO("Economy and finance", new CounterDTO(787, 64), true, null, null),
+                                new ValueDTO("Agriculture, fisheries, forestry and food", new CounterDTO(1322, 45), false, null, null),
+                                new ValueDTO("Government and public sector", new CounterDTO(1, 1), true, null, null)
                         )).build(),
                 FilterDTO.builder().filterGroupTitle("License").searchField("distributions.license.uri.keyword").hasExternalLink(true).hasStaticValues(false)
                         .values(Arrays.asList(
-                                new ValueDTO("http://reference.data.gov.uk/id/open-government-licence", new CounterDTO(530, 68), false),
-                                new ValueDTO("http://dcat-ap.de/def/licenses/dl-by-de/2.0", new CounterDTO(500, 100), false)
+                                new ValueDTO("http://reference.data.gov.uk/id/open-government-licence", new CounterDTO(530, 68), false, null, null),
+                                new ValueDTO("http://dcat-ap.de/def/licenses/dl-by-de/2.0", new CounterDTO(500, 100), false, null, null)
                         )).build()
         };
         searchDTO.setFilters(filterDTOList);
