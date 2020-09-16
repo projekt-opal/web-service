@@ -78,6 +78,19 @@ public class RestAPIController {
     ) {
         return provider.getFilters(searchDTO, null);
     }
+    
+    
+    @CrossOrigin
+    @PostMapping("/dataSet/hasChanges")
+    public boolean hasChanges(String uri) {
+        return false;
+    }
+    
+    @CrossOrigin
+    @PostMapping("/dataSet/getChanges")
+    public void getChanges(String uri) {
+    	
+    }
 
     @CrossOrigin
     @PostMapping("/filteredOptions")
