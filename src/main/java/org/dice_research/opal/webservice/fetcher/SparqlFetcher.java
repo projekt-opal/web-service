@@ -23,6 +23,7 @@ import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.sparql.engine.http.QueryExceptionHTTP;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 
 /**
  * A simple {@link Fetcher} for SPARQL that tries to get DataSets from a SPARQL
@@ -31,6 +32,7 @@ import org.slf4j.LoggerFactory;
  * @author Geraldo de Souza Jr (gsjunior@uni-paderborn.de)
  *
  */
+@Component
 public class SparqlFetcher {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SparqlFetcher.class);

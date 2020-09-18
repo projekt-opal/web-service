@@ -1,10 +1,12 @@
 package org.dice_research.opal.webservice.control;
 
 import org.dice_research.opal.webservice.model.entity.DataSet;
+import org.dice_research.opal.webservice.model.entity.dto.ChangesDTO;
 import org.dice_research.opal.webservice.model.entity.dto.DataSetDTO;
 import org.dice_research.opal.webservice.model.entity.dto.FilterDTO;
 import org.dice_research.opal.webservice.model.entity.dto.SearchDTO;
 import org.dice_research.opal.webservice.services.ElasticSearchProvider;
+import org.dice_research.opal.webservice.services.SparqlQueryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,10 +16,12 @@ import java.util.List;
 public class RestAPIController {
 
     private final ElasticSearchProvider provider;
+    private final SparqlQueryService sparqlService;
 
     @Autowired
-    public RestAPIController(ElasticSearchProvider provider) {
+    public RestAPIController(ElasticSearchProvider provider, SparqlQueryService sparqlService) {
         this.provider = provider;
+        this.sparqlService = sparqlService;
     }
 
     @CrossOrigin
@@ -81,15 +85,15 @@ public class RestAPIController {
     
     
     @CrossOrigin
-    @PostMapping("/dataSet/hasChanges")
-    public boolean hasChanges(String uri) {
-        return false;
+    @PostMapping("/dataSets/hasChanges")
+    public ChangesDTO hasChanges(@RequestParam(name = "uri", required = false) String uri) {
+        return sparqlService.hasChanges(uri);
     }
     
     @CrossOrigin
-    @PostMapping("/dataSet/getChanges")
-    public void getChanges(String uri) {
-    	
+    @PostMapping("/dataSets/getChanges")
+    public ChangesDTO getChanges(String uri) {
+    	return sparqlService.getChanges(uri);
     }
 
     @CrossOrigin
