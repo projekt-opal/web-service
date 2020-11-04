@@ -382,22 +382,21 @@ public class ElasticSearchProvider {
 	
 	private FilterDTO getFilterListOfCatalogs(SearchDTO searchDTO, String uri) throws IOException {
 		String searchField = "catalog";
-//		HashMap<String, List<ValueDTO>> catalogeMeasures = new HashMap<String, List<ValueDTO>>();
 		List<String> catalogeURIs = new ArrayList<String>( Arrays.asList(
 				"https://mcloud.de/", 
 				"https://www.govdata.de/", 
 				"https://www.europeandataportal.eu/",
 				"https://service.mdm-portal.de/"));
-//		for (String catalog : catalogeURIs) {
-//			List<ValueDTO> amountOfValues = calculateTopCatalogeValues(searchDTO, searchField, null, catalog);
-//			catalogeMeasures.put(catalog, amountOfValues);
-//        }
 		
 		List<ValueDTO> values = new ArrayList<>();
 		for (String i : catalogeURIs) {
 			ValueDTO valueDTO = new ValueDTO();
 			valueDTO.setValue(i);
 			valueDTO.setCount(new CounterDTO());
+			ArrayList<String> mostUsedDataFormats = calculateMostUsedDataFormats(i);
+            valueDTO.setMostUsedDataFormats(mostUsedDataFormats);
+            ArrayList<String> mostUsedDataCategories = calculateMostUsedDataCategories(i);
+            valueDTO.setMostUsedDataCategories(mostUsedDataCategories);
 			values.add(valueDTO);
 		}
 		
@@ -430,44 +429,6 @@ public class ElasticSearchProvider {
 		});
 
 		return values;
-	}
-	
-	private List<ValueDTO> calculateTopCatalogeValues(SearchDTO searchDTO, String searchField, String containsText, String catalog)
-			throws IOException {
-		List<ValueDTO> values = new ArrayList<>();
-		SearchRequest searchRequest = new SearchRequest();
-		searchRequest.indices(es_index);
-		
-		SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-		searchSourceBuilder.size(1);
-		
-		searchSourceBuilder.query(
-                        QueryBuilders.termQuery(
-                        		searchField, catalog)
-                        );
-		
-		searchRequest.source(searchSourceBuilder);
-
-		try {
-            SearchResponse searchResponse = restHighLevelClient.search(searchRequest, RequestOptions.DEFAULT);
-
-            if (searchResponse.getHits().getTotalHits().value >= 1) {
-				SearchHit[] hits = searchResponse.getHits().getHits();
-				SearchHit hit = hits[0];
-				String sourceAsString = hit.getSourceAsString();			
-				ValueDTO valueDTO = new ValueDTO();
-				valueDTO.setValue(sourceAsString);
-				valueDTO.setCount(new CounterDTO());
-				values.add(valueDTO);
-			}
-            
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        
-        return values;
 	}
 
 	private List<ValueDTO> calculateTopValues(SearchDTO searchDTO, String searchField, String containsText)
