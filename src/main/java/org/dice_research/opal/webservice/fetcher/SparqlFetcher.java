@@ -1,6 +1,5 @@
 package org.dice_research.opal.webservice.fetcher;
 
-
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -35,129 +34,131 @@ import org.springframework.stereotype.Component;
 @Component
 public class SparqlFetcher {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(SparqlFetcher.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(SparqlFetcher.class);
 
-    /**
-     * The delay that the system will have between sending two queries.
-     */
+	/**
+	 * The delay that the system will have between sending two queries.
+	 */
 
-    //protected String dataSetQuery = "select ?s where {?s a <http://www.w3.org/ns/dcat#Dataset>.} ";
-    protected String graphQuery = "construct { ?s ?p ?o. " + "?o ?p2 ?o2. } " + "where { " + " "
-            + "?s ?p ?o. " + "OPTIONAL { ?o ?p2 ?o2.} " + " " + "}";
+	// protected String dataSetQuery = "select ?s where {?s a
+	// <http://www.w3.org/ns/dcat#Dataset>.} ";
+	protected String graphQuery = "construct { ?s ?p ?o. " + "?o ?p2 ?o2. } " + "where { " + " " + "?s ?p ?o. "
+			+ "OPTIONAL { ?o ?p2 ?o2.} " + " " + "}";
 
-    protected int delay;
-    protected int limit = 0;
-    protected File dataDirectory = FileUtils.getTempDirectory();
-    protected boolean checkForUriType = false;
+	protected int delay;
+	protected int limit = 0;
+	protected File dataDirectory = FileUtils.getTempDirectory();
+	protected boolean checkForUriType = false;
 
+	public SparqlFetcher() {
 
-    public SparqlFetcher() {
+	}
 
-    }
-
-    @SuppressWarnings("deprecation")
+	@SuppressWarnings("deprecation")
 	public File fetch(String uri, String dataSetResource) {
-        // Check whether we can be sure that it is a SPARQL endpoint
-        QueryExecutionFactory qef = null;
-        QueryExecution execution = null;
-        File dataFile = null;
-        OutputStream out = null;
-            try {
-                // Create query execution instance
-                qef = initQueryExecution(uri);
-                // create temporary file
-                try {
-                    dataFile = File.createTempFile("fetched_", "", dataDirectory);
-                    out = new BufferedOutputStream(new FileOutputStream(dataFile));
-                } catch (IOException e) {
-                    LOGGER.error("Couldn't create temporary file for storing fetched data. Returning null.", e);
-                    return null;
-                }
-                  
-                    LOGGER.info("- Now Fetching - " + dataSetResource);
+		// Check whether we can be sure that it is a SPARQL endpoint
+		QueryExecutionFactory qef = null;
+		QueryExecution execution = null;
+		File dataFile = null;
+		OutputStream out = null;
+		try {
+			// Create query execution instance
+			qef = initQueryExecution(uri);
+			// create temporary file
+			try {
+				dataFile = File.createTempFile("fetched_", "", dataDirectory);
+				out = new BufferedOutputStream(new FileOutputStream(dataFile));
+			} catch (IOException e) {
+				LOGGER.error("Couldn't create temporary file for storing fetched data. Returning null.", e);
+				return null;
+			}
 
-                    Query query = QueryFactory.create(graphQuery.replaceAll("\\?s", "<" + dataSetResource + ">"));
+			LOGGER.info("- Now Fetching - " + dataSetResource);
 
-                        try {
-                            Thread.sleep(delay);
-                        } catch (InterruptedException e) {
-                            LOGGER.error("An error occurred when fetching URI: " + uri, e);
-                        }
+			Query query = QueryFactory.create(graphQuery.replaceAll("\\?s", "<" + dataSetResource + ">"));
 
-                        try {
-                            QueryExecution qexecGraph = org.apache.jena.query.QueryExecutionFactory
-                                    .createServiceRequest(uri, query);
+			try {
+				Thread.sleep(delay);
+			} catch (InterruptedException e) {
+				LOGGER.error("An error occurred when fetching URI: " + uri, e);
+			}
 
-                            Iterator<Triple> triples = qexecGraph.execConstructTriples();
+			try {
+				QueryExecution qexecGraph = org.apache.jena.query.QueryExecutionFactory.createServiceRequest(uri,
+						query);
 
-                            RDFDataMgr.writeTriples(out, new SelectedTriplesIterator(triples));
+				Iterator<Triple> triples = qexecGraph.execConstructTriples();
 
-                        } catch (QueryExceptionHTTP e) {
+				RDFDataMgr.writeTriples(out, new SelectedTriplesIterator(triples));
 
-                           /* if (e.getResponseCode() == 404 || e.getResponseCode() == 500) {
-                                tryAgain = true;
-                                LOGGER.info("Error while fetching " + dataSetResource + ". Trying again...");
-                            }*/
+			} catch (QueryExceptionHTTP e) {
 
-                        }
-                    
-                
+				/*
+				 * if (e.getResponseCode() == 404 || e.getResponseCode() == 500) { tryAgain =
+				 * true; LOGGER.info("Error while fetching " + dataSetResource +
+				 * ". Trying again..."); }
+				 */
+
+			}
 
 //            RDFDataMgr.writeTriples(out, new SelectedTriplesIterator(resultSet));
-            } catch (Exception e) {
-                // If this should have worked, print a message, otherwise silently return null
-            	e.printStackTrace();
-                return null;
-            } finally {
-                IOUtils.closeQuietly(out);
-                if (execution != null) {
-                    execution.close();
-                }
-                if (qef != null) {
-                    qef.close();
-                }
-            }
-            return dataFile;
-        
-    }
+		} catch (Exception e) {
+			// If this should have worked, print a message, otherwise silently return null
+			e.printStackTrace();
+			return null;
+		} finally {
+			IOUtils.closeQuietly(out);
+			if (execution != null) {
+				execution.close();
+			}
+			if (qef != null) {
+				try {
+					qef.close();
+				} catch (Exception e) {
+					LOGGER.error("Error on closing", e);
+				}
+			}
+		}
+		return dataFile;
 
-    protected QueryExecutionFactory initQueryExecution(String uri) throws ClassNotFoundException, SQLException {
-        QueryExecutionFactory qef;
-        qef = new QueryExecutionFactoryHttp(uri);
-        qef = new QueryExecutionFactoryDelay(qef, delay);
-        try {
-            LOGGER.info("Starting to Query uri:" + uri);
-            return new QueryExecutionFactoryPaginated(qef, 2000);
-        } catch (Exception e) {
-            LOGGER.info("Couldn't create Factory with pagination. Returning Factory without pagination. Exception: {}",
-                    e.getLocalizedMessage());
-            return qef;
-        }
-    }
+	}
 
+	protected QueryExecutionFactory initQueryExecution(String uri) throws ClassNotFoundException, SQLException {
+		QueryExecutionFactory qef;
+		qef = new QueryExecutionFactoryHttp(uri);
+		qef = new QueryExecutionFactoryDelay(qef, delay);
+		try {
+			LOGGER.info("Starting to Query uri:" + uri);
+			return new QueryExecutionFactoryPaginated(qef, 2000);
+		} catch (Exception e) {
+			LOGGER.info("Couldn't create Factory with pagination. Returning Factory without pagination. Exception: {}",
+					e.getLocalizedMessage());
+			return qef;
+		}
+	}
 
+	protected static class SelectedTriplesIterator implements Iterator<Triple> {
+		private Iterator<Triple> triples;
 
-    protected static class SelectedTriplesIterator implements Iterator<Triple> {
-        private Iterator<Triple> triples;
+		public SelectedTriplesIterator(Iterator<Triple> triples) {
+			this.triples = triples;
+		}
 
-        public SelectedTriplesIterator(Iterator<Triple> triples) {
-            this.triples = triples;
-        }
+		@Override
+		public boolean hasNext() {
+			return triples.hasNext();
+		}
 
-        @Override
-        public boolean hasNext() {
-            return triples.hasNext();
-        }
+		@Override
+		public Triple next() {
+			return triples.next();
+		}
 
-        @Override
-        public Triple next() {
-            return triples.next();
-        }
+	}
 
-    }
-    
-    public static void main(String[] args) {
-		new SparqlFetcher().fetch("http://opaldata.cs.uni-paderborn.de:3030/opal-2020-04", "http://projekt-opal.de/dataset/18e77c1c778125780c053b4d3a10c2dd");
+	public static void main(String[] args) {
+		new SparqlFetcher().fetch("http://opaldata.cs.uni-paderborn.de:3030/opal-2020-04",
+				"http://projekt-opal.de/dataset/18e77c1c778125780c053b4d3a10c2dd");
 	}
 
 }
