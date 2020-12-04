@@ -286,8 +286,10 @@ public class ElasticSearchProvider {
 		if (dataSet.getTitle_de() != null)
 			query.should(QueryBuilders.matchQuery("title_de", dataSet.getTitle_de()));
 		List<String> filteredMaxkw = null;
-		if (dataSet.getKeywords() != null)
-			filteredMaxkw = dataSet.getKeywords().subList(0, LIST_MAX_RESULTS);
+		if (dataSet.getKeywords() != null) {
+			int maxAvailable = Math.min(dataSet.getKeywords().size(), LIST_MAX_RESULTS);
+			filteredMaxkw = dataSet.getKeywords().subList(0, maxAvailable);
+		}
 		if (filteredMaxkw != null)
 			filteredMaxkw.forEach(k -> query.should(QueryBuilders.matchQuery("keywords", k)));
 		if (dataSet.getKeywords_de() != null)
@@ -379,33 +381,29 @@ public class ElasticSearchProvider {
 		return FilterDTO.builder().filterGroupTitle("Publisher").hasExternalLink(true).hasStaticValues(false)
 				.values(values).searchField(searchField).build();
 	}
-	
+
 	private FilterDTO getFilterListOfCatalogs(SearchDTO searchDTO, String uri) throws IOException {
 		String searchField = "catalog";
-		List<String> catalogeURIs = new ArrayList<String>( Arrays.asList(
-				"https://mcloud.de/", 
-				"https://www.govdata.de/", 
-				"https://www.europeandataportal.eu/",
-				"https://service.mdm-portal.de/"));
-		
+		List<String> catalogeURIs = new ArrayList<String>(Arrays.asList("https://mcloud.de/", "https://www.govdata.de/",
+				"https://www.europeandataportal.eu/", "https://service.mdm-portal.de/"));
+
 		List<ValueDTO> values = new ArrayList<>();
 		for (String i : catalogeURIs) {
 			ValueDTO valueDTO = new ValueDTO();
 			valueDTO.setValue(i);
 			valueDTO.setCount(new CounterDTO());
 			ArrayList<String> mostUsedDataFormats = calculateMostUsedDataFormats(i);
-            valueDTO.setMostUsedDataFormats(mostUsedDataFormats);
-            ArrayList<String> mostUsedDataCategories = calculateMostUsedDataCategories(i);
-            valueDTO.setMostUsedDataCategories(mostUsedDataCategories);
+			valueDTO.setMostUsedDataFormats(mostUsedDataFormats);
+			ArrayList<String> mostUsedDataCategories = calculateMostUsedDataCategories(i);
+			valueDTO.setMostUsedDataCategories(mostUsedDataCategories);
 			values.add(valueDTO);
 		}
-		
 
 		updateRelativeCount(searchDTO, uri, searchField, values);
 		updateAbsoluteCount(searchDTO, uri, searchField, values);
 
-		return FilterDTO.builder().filterGroupTitle("Catalog").hasExternalLink(true).hasStaticValues(true).values(values)
-				.searchField(searchField).build();
+		return FilterDTO.builder().filterGroupTitle("Catalog").hasExternalLink(true).hasStaticValues(true)
+				.values(values).searchField(searchField).build();
 	}
 
 	private void updateRelativeCount(SearchDTO searchDTO, String uri, String searchField, List<ValueDTO> values) {
@@ -452,104 +450,90 @@ public class ElasticSearchProvider {
 			valueDTO.setValue(keyAsString);
 			valueDTO.setCount(new CounterDTO());
 			ArrayList<String> mostUsedDataFormats = calculateMostUsedDataFormats(keyAsString);
-            valueDTO.setMostUsedDataFormats(mostUsedDataFormats);
-            ArrayList<String> mostUsedDataCategories = calculateMostUsedDataCategories(keyAsString);
-            valueDTO.setMostUsedDataCategories(mostUsedDataCategories);
+			valueDTO.setMostUsedDataFormats(mostUsedDataFormats);
+			ArrayList<String> mostUsedDataCategories = calculateMostUsedDataCategories(keyAsString);
+			valueDTO.setMostUsedDataCategories(mostUsedDataCategories);
 			values.add(valueDTO);
 		});
 		return values;
 	}
-	
+
 	private ArrayList<String> calculateMostUsedDataFormats(String publisherName) {
-        ArrayList<String> mostUsedDataFormats = new ArrayList<String>();
-        SearchRequest searchRequest = new SearchRequest();
-        searchRequest.indices(es_index);
+		ArrayList<String> mostUsedDataFormats = new ArrayList<String>();
+		SearchRequest searchRequest = new SearchRequest();
+		searchRequest.indices(es_index);
 
-        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-        searchSourceBuilder.size(0);
-        
-        searchSourceBuilder.aggregation(AggregationBuilders.nested("agg", "distributions")
-              .subAggregation(
-                      AggregationBuilders
-                              .terms("agg1").field("distributions.format")
-              ));
-        
-      //get publisher with exact name
-      ScoreMode mode=ScoreMode.Total;
-      searchSourceBuilder.query(QueryBuilders
-                .nestedQuery("publisher", 
-                        
-                        QueryBuilders.matchQuery(
-                                "publisher.name",publisherName)
-                        			.operator(MatchQueryBuilder.DEFAULT_OPERATOR.AND)
-                        			.autoGenerateSynonymsPhraseQuery(false)
-                        			.fuzzyTranspositions(false), mode
-                        ));
-        searchRequest.source(searchSourceBuilder);
+		SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+		searchSourceBuilder.size(0);
 
-        try {
-            SearchResponse searchResponse = restHighLevelClient.search(searchRequest, RequestOptions.DEFAULT);
+		searchSourceBuilder.aggregation(AggregationBuilders.nested("agg", "distributions")
+				.subAggregation(AggregationBuilders.terms("agg1").field("distributions.format")));
 
-            //print available data formats sorted by occurrences
-            Nested agg = searchResponse.getAggregations().get("agg");
-            Terms name = agg.getAggregations().get("agg1");
-            for (Terms.Bucket bucket : name.getBuckets()) {
+		// get publisher with exact name
+		ScoreMode mode = ScoreMode.Total;
+		searchSourceBuilder.query(QueryBuilders.nestedQuery("publisher",
+
+				QueryBuilders.matchQuery("publisher.name", publisherName)
+						.operator(MatchQueryBuilder.DEFAULT_OPERATOR.AND).autoGenerateSynonymsPhraseQuery(false)
+						.fuzzyTranspositions(false),
+				mode));
+		searchRequest.source(searchSourceBuilder);
+
+		try {
+			SearchResponse searchResponse = restHighLevelClient.search(searchRequest, RequestOptions.DEFAULT);
+
+			// print available data formats sorted by occurrences
+			Nested agg = searchResponse.getAggregations().get("agg");
+			Terms name = agg.getAggregations().get("agg1");
+			for (Terms.Bucket bucket : name.getBuckets()) {
 //                System.out.println(bucket.getKey()+": "+bucket.getDocCount());
-                mostUsedDataFormats.add((String) bucket.getKey());
-            } 
-            return mostUsedDataFormats;
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+				mostUsedDataFormats.add((String) bucket.getKey());
+			}
+			return mostUsedDataFormats;
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 
-        
-        return null;
-    }
-    
-    private ArrayList<String> calculateMostUsedDataCategories(String publisherName) {
-        ArrayList<String> mostUsedDataCategories = new ArrayList<String>();
-        SearchRequest searchRequest = new SearchRequest();
-        searchRequest.indices(es_index);
+		return null;
+	}
 
-        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-        searchSourceBuilder.size(0);
-        
-        searchSourceBuilder.aggregation(
-                AggregationBuilders
-                        .terms("agg2").field("themes")
-        );
-        
-      //get publisher with name
-      ScoreMode mode=ScoreMode.Total;
-      searchSourceBuilder.query(QueryBuilders
-                .nestedQuery("publisher", 
-                        
-                        QueryBuilders.matchQuery(
-                                "publisher.name",publisherName)
-	                        .operator(MatchQueryBuilder.DEFAULT_OPERATOR.AND)
-	            			.autoGenerateSynonymsPhraseQuery(false)
-	            			.fuzzyTranspositions(false), mode
-                        ));
-        
-        searchRequest.source(searchSourceBuilder);
+	private ArrayList<String> calculateMostUsedDataCategories(String publisherName) {
+		ArrayList<String> mostUsedDataCategories = new ArrayList<String>();
+		SearchRequest searchRequest = new SearchRequest();
+		searchRequest.indices(es_index);
 
-        try {
-            SearchResponse searchResponse = restHighLevelClient.search(searchRequest, RequestOptions.DEFAULT);
+		SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+		searchSourceBuilder.size(0);
 
-            //print categories by occurrences
-            Terms theme = searchResponse.getAggregations().get("agg2");
-            for (Terms.Bucket bucket : theme.getBuckets()) {
-                mostUsedDataCategories.add((String) bucket.getKey());
-            }
-            
-            return mostUsedDataCategories;
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+		searchSourceBuilder.aggregation(AggregationBuilders.terms("agg2").field("themes"));
 
-        
-        return null;
-    }
+		// get publisher with name
+		ScoreMode mode = ScoreMode.Total;
+		searchSourceBuilder.query(QueryBuilders.nestedQuery("publisher",
+
+				QueryBuilders.matchQuery("publisher.name", publisherName)
+						.operator(MatchQueryBuilder.DEFAULT_OPERATOR.AND).autoGenerateSynonymsPhraseQuery(false)
+						.fuzzyTranspositions(false),
+				mode));
+
+		searchRequest.source(searchSourceBuilder);
+
+		try {
+			SearchResponse searchResponse = restHighLevelClient.search(searchRequest, RequestOptions.DEFAULT);
+
+			// print categories by occurrences
+			Terms theme = searchResponse.getAggregations().get("agg2");
+			for (Terms.Bucket bucket : theme.getBuckets()) {
+				mostUsedDataCategories.add((String) bucket.getKey());
+			}
+
+			return mostUsedDataCategories;
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		return null;
+	}
 
 	private long calculateTheAbsoluteCount(SearchDTO searchDTO, String uri, String fieldQuery, String value) {
 		SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
