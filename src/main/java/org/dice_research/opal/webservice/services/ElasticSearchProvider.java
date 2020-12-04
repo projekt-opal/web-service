@@ -30,7 +30,6 @@ import org.elasticsearch.search.sort.SortBuilders;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -171,6 +170,7 @@ public class ElasticSearchProvider {
 		try {
 			ret.add(getFilterListOfThemes(searchDTO, uri));
 			ret.add(getFilterListOfPublishers(searchDTO, uri));
+			ret.add(getFilterListOfCatalogs(searchDTO, uri));
 			ret.add(getFilterListOfLicenses(searchDTO, uri));
 //            ret.add(getIssueDateFilter());
 		} catch (IOException e) {
@@ -378,6 +378,34 @@ public class ElasticSearchProvider {
 
 		return FilterDTO.builder().filterGroupTitle("Publisher").hasExternalLink(true).hasStaticValues(false)
 				.values(values).searchField(searchField).build();
+	}
+	
+	private FilterDTO getFilterListOfCatalogs(SearchDTO searchDTO, String uri) throws IOException {
+		String searchField = "catalog";
+		List<String> catalogeURIs = new ArrayList<String>( Arrays.asList(
+				"https://mcloud.de/", 
+				"https://www.govdata.de/", 
+				"https://www.europeandataportal.eu/",
+				"https://service.mdm-portal.de/"));
+		
+		List<ValueDTO> values = new ArrayList<>();
+		for (String i : catalogeURIs) {
+			ValueDTO valueDTO = new ValueDTO();
+			valueDTO.setValue(i);
+			valueDTO.setCount(new CounterDTO());
+			ArrayList<String> mostUsedDataFormats = calculateMostUsedDataFormats(i);
+            valueDTO.setMostUsedDataFormats(mostUsedDataFormats);
+            ArrayList<String> mostUsedDataCategories = calculateMostUsedDataCategories(i);
+            valueDTO.setMostUsedDataCategories(mostUsedDataCategories);
+			values.add(valueDTO);
+		}
+		
+
+		updateRelativeCount(searchDTO, uri, searchField, values);
+		updateAbsoluteCount(searchDTO, uri, searchField, values);
+
+		return FilterDTO.builder().filterGroupTitle("Catalog").hasExternalLink(true).hasStaticValues(true).values(values)
+				.searchField(searchField).build();
 	}
 
 	private void updateRelativeCount(SearchDTO searchDTO, String uri, String searchField, List<ValueDTO> values) {
