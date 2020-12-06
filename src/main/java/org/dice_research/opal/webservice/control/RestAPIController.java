@@ -77,13 +77,13 @@ public class RestAPIController {
 	@CrossOrigin
 	@PostMapping("/dataSets/hasChanges")
 	public ChangesDTO hasChanges(@RequestParam(name = "uri", required = false) String uri) {
-		return sparqlService.hasChanges(uri);
+		return sparqlService.hasChangesAsDTO(uri);
 	}
 
 	@CrossOrigin
 	@PostMapping("/dataSets/getChanges")
 	public ChangesDTO getChanges(String uri) {
-		return sparqlService.getChanges(uri);
+		return sparqlService.getChangesAsDTO(uri);
 	}
 
 	@CrossOrigin

@@ -23,25 +23,29 @@ public class SparqlQueryService {
 	@Autowired
 	private SparqlFetcher fetcher;
 
-	public ChangesDTO hasChanges(String uri) {
+	public boolean hasChanges(String uri) {
 		Set<Triple> previousTriples = getTriplesFromQuery(configProperties.get("sparql.endpoint.previous"), uri);
 		Set<Triple> currentTriples = getTriplesFromQuery(configProperties.get("sparql.endpoint.current"), uri);
-
-		ChangesDTO dto = new ChangesDTO();
-		dto.setHasChanges(false);
-		dto.setUri(uri);
 
 		for (Triple t : currentTriples)
 			if (t.getSubject().isBlank() || t.getObject().isBlank())
 				continue;
 
 			else if (!previousTriples.contains(t))
-				dto.setHasChanges(true);
+				return true;
 
+		return false;
+	}
+
+	public ChangesDTO hasChangesAsDTO(String uri) {
+		ChangesDTO dto = new ChangesDTO();
+		dto.setHasChanges(false);
+		dto.setUri(uri);
+		dto.setHasChanges(hasChanges(uri));
 		return dto;
 	}
 
-	public ChangesDTO getChanges(String uri) {
+	public ChangesDTO getChangesAsDTO(String uri) {
 		ChangesDTO dto = new ChangesDTO();
 
 		Set<String> previousTriples = new HashSet<String>();
