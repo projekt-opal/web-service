@@ -52,7 +52,9 @@ import org.springframework.stereotype.Component;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -263,6 +265,33 @@ public class ElasticSearchProvider {
 		stringBuilder.append(System.lineSeparator());
 
 		return stringBuilder.toString();
+	}
+
+	public String getGeoDatasetsHtml(double top, double left, double bottom, double right, String urlPrefix) {
+		StringBuilder sb = new StringBuilder();
+		sb.append("<!DOCTYPE html>");
+		sb.append("<html lang=\"en\">");
+		sb.append("<head><meta charset=\"utf-8\"><title>OPAL Geo Search</title></head>");
+		sb.append("<body>");
+		sb.append("<ul>");
+		for (JsonElement je : JsonParser.parseString(getGeoDatasets(top, left, bottom, right)).getAsJsonArray()) {
+			JsonObject jo = je.getAsJsonObject();
+			sb.append("<li>");
+			sb.append("<a href=\"");
+			sb.append(urlPrefix);
+			sb.append(jo.get("uri").getAsString());
+			sb.append("\">");
+			if (jo.has("title"))
+				sb.append(jo.get("title").getAsString());
+			else
+				sb.append(jo.get("uri").getAsString());
+			sb.append("</a>");
+			sb.append("</li>");
+		}
+		sb.append("</ul>");
+		sb.append("</body>");
+		sb.append("</html>");
+		return sb.toString();
 	}
 
 	public String getGeoDatasets(double top, double left, double bottom, double right) {

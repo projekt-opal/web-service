@@ -115,4 +115,15 @@ public class RestAPIController {
 				Double.parseDouble(right));
 	}
 
+	/**
+	 * Gets HTML.
+	 */
+	@CrossOrigin
+	@GetMapping("/getGeoDatasetsHtml")
+	public String getGeoDatasetsHtml(@RequestParam String top, @RequestParam String left, @RequestParam String bottom,
+			@RequestParam String right, @RequestParam String urlPrefix) {
+		return provider.getGeoDatasetsHtml(Double.parseDouble(top), Double.parseDouble(left),
+				Double.parseDouble(bottom), Double.parseDouble(right), urlPrefix);
+	}
+
 }
