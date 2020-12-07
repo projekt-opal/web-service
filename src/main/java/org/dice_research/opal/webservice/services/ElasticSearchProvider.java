@@ -1,19 +1,39 @@
 package org.dice_research.opal.webservice.services;
 
-import com.google.gson.Gson;
-import lombok.extern.slf4j.Slf4j;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
 import org.apache.lucene.search.join.ScoreMode;
+import org.dice_research.opal.webservice.config.ConfigProperties;
 import org.dice_research.opal.webservice.config.ThemeConfiguration;
 import org.dice_research.opal.webservice.model.entity.DataSet;
-import org.dice_research.opal.webservice.model.entity.dto.*;
+import org.dice_research.opal.webservice.model.entity.dto.CounterDTO;
+import org.dice_research.opal.webservice.model.entity.dto.DataSetDTO;
+import org.dice_research.opal.webservice.model.entity.dto.FilterDTO;
+import org.dice_research.opal.webservice.model.entity.dto.RangeDTO;
+import org.dice_research.opal.webservice.model.entity.dto.SearchDTO;
+import org.dice_research.opal.webservice.model.entity.dto.ValueDTO;
 import org.dice_research.opal.webservice.model.mapper.JsonObjectToDataSetMapper;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.index.analysis.AnalysisRegistry;
-import org.elasticsearch.index.query.*;
+import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.GeoBoundingBoxQueryBuilder;
+import org.elasticsearch.index.query.InnerHitBuilder;
+import org.elasticsearch.index.query.MatchQueryBuilder;
+import org.elasticsearch.index.query.NestedQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.index.query.RangeQueryBuilder;
+import org.elasticsearch.index.query.TermQueryBuilder;
 import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.aggregations.Aggregation;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.bucket.nested.Nested;
@@ -32,11 +52,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+
+import lombok.extern.slf4j.Slf4j;
 
 @Component
 @Slf4j
@@ -202,6 +222,11 @@ public class ElasticSearchProvider {
 
 	public String getInfo() {
 		StringBuilder stringBuilder = new StringBuilder();
+
+		stringBuilder.append("Elasticsearch: ");
+		stringBuilder.append("<br />");
+		stringBuilder.append(System.lineSeparator());
+
 		stringBuilder.append("URL: ");
 		stringBuilder.append(es_url);
 		stringBuilder.append("<br />");
@@ -216,7 +241,75 @@ public class ElasticSearchProvider {
 		stringBuilder.append(es_index);
 		stringBuilder.append("<br />");
 		stringBuilder.append(System.lineSeparator());
+
+		stringBuilder.append("<br />");
+		stringBuilder.append(System.lineSeparator());
+
+		ConfigProperties configProperties = new ConfigProperties();
+
+		stringBuilder.append("SPARQL previous: ");
+		stringBuilder.append("<br />");
+		stringBuilder.append(configProperties.get(ConfigProperties.KEY_SPARQL_PREV_TITLE));
+		stringBuilder.append("<br />");
+		stringBuilder.append(configProperties.get(ConfigProperties.KEY_SPARQL_PREV));
+		stringBuilder.append("<br />");
+		stringBuilder.append("<br />");
+		stringBuilder.append(System.lineSeparator());
+
+		stringBuilder.append("SPARQL current: ");
+		stringBuilder.append("<br />");
+		stringBuilder.append(configProperties.get(ConfigProperties.KEY_SPARQL_CURRENT_TITLE));
+		stringBuilder.append("<br />");
+		stringBuilder.append(configProperties.get(ConfigProperties.KEY_SPARQL_CURRENT));
+		stringBuilder.append("<br />");
+		stringBuilder.append(System.lineSeparator());
+
 		return stringBuilder.toString();
+	}
+
+	public String getGeoDatasets(double top, double left, double bottom, double right) {
+		JsonArray ja = new JsonArray();
+
+		for (SearchHit hit : getGeoDatasetsResponse(top, left, bottom, right).getHits().getHits()) {
+			JsonObject jo = new JsonObject();
+			Map<String, Object> map = hit.getSourceAsMap();
+			jo.addProperty("uri", map.get("uri").toString());
+
+			if (map.containsKey("title_de")) {
+				jo.addProperty("title", map.get("title_de").toString());
+			} else if (map.containsKey("title")) {
+				jo.addProperty("title", map.get("title").toString());
+			}
+
+			ja.add(jo);
+		}
+		return ja.toString();
+	}
+
+	private SearchResponse getGeoDatasetsResponse(double top, double left, double bottom, double right) {
+		String fieldName = "spatial.geometry";
+		String nestedFieldName = "spatial";
+		int results = 200;
+
+		GeoBoundingBoxQueryBuilder geoBoxBuilder = QueryBuilders.geoBoundingBoxQuery(fieldName);
+		geoBoxBuilder.setCorners(top, left, bottom, right);
+
+		NestedQueryBuilder nestedQueryBuilder = QueryBuilders.nestedQuery(nestedFieldName, geoBoxBuilder,
+				ScoreMode.None);
+
+		SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+		searchSourceBuilder.size(results);
+		searchSourceBuilder.query(nestedQueryBuilder);
+
+		SearchRequest searchRequest = new SearchRequest();
+		searchRequest.source(searchSourceBuilder);
+
+		try {
+			return restHighLevelClient.search(searchRequest, RequestOptions.DEFAULT);
+		} catch (IOException e) {
+			log.error("", e);
+			return null;
+		}
 	}
 
 	public DataSet getDataSet(String uri) {

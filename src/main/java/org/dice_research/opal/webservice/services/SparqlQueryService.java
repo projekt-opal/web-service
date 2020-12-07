@@ -24,8 +24,9 @@ public class SparqlQueryService {
 	private SparqlFetcher fetcher;
 
 	public boolean hasChanges(String uri) {
-		Set<Triple> previousTriples = getTriplesFromQuery(configProperties.get("sparql.endpoint.previous"), uri);
-		Set<Triple> currentTriples = getTriplesFromQuery(configProperties.get("sparql.endpoint.current"), uri);
+		Set<Triple> previousTriples = getTriplesFromQuery(configProperties.get(ConfigProperties.KEY_SPARQL_PREV), uri);
+		Set<Triple> currentTriples = getTriplesFromQuery(configProperties.get(ConfigProperties.KEY_SPARQL_CURRENT),
+				uri);
 
 		for (Triple t : currentTriples)
 			if (t.getSubject().isBlank() || t.getObject().isBlank())
@@ -54,14 +55,14 @@ public class SparqlQueryService {
 		Set<String> removedTriples = new HashSet<String>();
 		Set<String> addedTriples = new HashSet<String>();
 
-		for (Triple t : getTriplesFromQuery(configProperties.get("sparql.endpoint.previous"), uri)) {
+		for (Triple t : getTriplesFromQuery(configProperties.get(ConfigProperties.KEY_SPARQL_PREV), uri)) {
 			if (t.getSubject().isBlank() || t.getObject().isBlank())
 				continue;
 
 			previousTriples.add(t.toString());
 		}
 
-		for (Triple t : getTriplesFromQuery(configProperties.get("sparql.endpoint.current"), uri)) {
+		for (Triple t : getTriplesFromQuery(configProperties.get(ConfigProperties.KEY_SPARQL_CURRENT), uri)) {
 			if (t.getSubject().isBlank() || t.getObject().isBlank())
 				continue;
 
@@ -70,12 +71,12 @@ public class SparqlQueryService {
 
 		for (String s : currentTriples) {
 			if (!previousTriples.contains(s))
-				removedTriples.add(s);
+				addedTriples.add(s);
 		}
 
 		for (String s : previousTriples) {
 			if (!currentTriples.contains(s))
-				addedTriples.add(s);
+				removedTriples.add(s);
 		}
 
 		String[] rem = new String[removedTriples.size()];

@@ -7,6 +7,11 @@ import java.util.Properties;
 
 public class ConfigProperties {
 
+	public static final String KEY_SPARQL_PREV = "sparql.endpoint.previous";
+	public static final String KEY_SPARQL_PREV_TITLE = "sparql.endpoint.previous.title";
+	public static final String KEY_SPARQL_CURRENT = "sparql.endpoint.current";
+	public static final String KEY_SPARQL_CURRENT_TITLE = "sparql.endpoint.current.title";
+	
 	public static final String FILENAME = "opal-webservices.properties";
 	private Properties properties;
 

@@ -95,10 +95,24 @@ public class RestAPIController {
 		return provider.getTopFiltersThatContain(searchDTO, uri, filterGroupTitle, containsText);
 	}
 
+	/**
+	 * Gets configuration info
+	 */
 	@CrossOrigin
 	@GetMapping("/opalinfo")
 	public String getInfo() {
 		return provider.getInfo();
+	}
+
+	/**
+	 * Gets JSON array with JSON object with keys uri and optional title.
+	 */
+	@CrossOrigin
+	@GetMapping("/getGeoDatasets")
+	public String getGeoDatasets(@RequestParam String top, @RequestParam String left, @RequestParam String bottom,
+			@RequestParam String right) {
+		return provider.getGeoDatasets(Double.parseDouble(top), Double.parseDouble(left), Double.parseDouble(bottom),
+				Double.parseDouble(right));
 	}
 
 }
