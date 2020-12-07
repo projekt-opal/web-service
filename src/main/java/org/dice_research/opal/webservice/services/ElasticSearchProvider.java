@@ -25,7 +25,6 @@ import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.index.analysis.AnalysisRegistry;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.GeoBoundingBoxQueryBuilder;
-import org.elasticsearch.index.query.InnerHitBuilder;
 import org.elasticsearch.index.query.MatchQueryBuilder;
 import org.elasticsearch.index.query.NestedQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
@@ -33,7 +32,6 @@ import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.RangeQueryBuilder;
 import org.elasticsearch.index.query.TermQueryBuilder;
 import org.elasticsearch.search.SearchHit;
-import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.aggregations.Aggregation;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.bucket.nested.Nested;
@@ -269,8 +267,14 @@ public class ElasticSearchProvider {
 
 	public String getGeoDatasets(double top, double left, double bottom, double right) {
 		JsonArray ja = new JsonArray();
+		SearchResponse searchResponse = getGeoDatasetsResponse(top, left, bottom, right);
 
-		for (SearchHit hit : getGeoDatasetsResponse(top, left, bottom, right).getHits().getHits()) {
+		// Handle exception (returns null)
+		if (searchResponse == null) {
+			return ja.toString();
+		}
+
+		for (SearchHit hit : searchResponse.getHits().getHits()) {
 			JsonObject jo = new JsonObject();
 			Map<String, Object> map = hit.getSourceAsMap();
 			jo.addProperty("uri", map.get("uri").toString());
@@ -286,6 +290,9 @@ public class ElasticSearchProvider {
 		return ja.toString();
 	}
 
+	/**
+	 * Gets geo search results for given bounding box. Returns null on errors.
+	 */
 	private SearchResponse getGeoDatasetsResponse(double top, double left, double bottom, double right) {
 		String fieldName = "spatial.geometry";
 		String nestedFieldName = "spatial";
