@@ -96,12 +96,21 @@ public class RestAPIController {
 	}
 
 	/**
-	 * Gets configuration info
+	 * Gets configuration info.
 	 */
 	@CrossOrigin
 	@GetMapping("/opalinfo")
 	public String getInfo() {
 		return provider.getInfo();
+	}
+
+	/**
+	 * Gets configuration info.
+	 */
+	@CrossOrigin
+	@GetMapping("/opalconfig")
+	public String getConfig(@RequestParam String key) {
+		return provider.getConfig(key);
 	}
 
 	/**

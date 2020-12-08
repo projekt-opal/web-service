@@ -267,6 +267,11 @@ public class ElasticSearchProvider {
 		return stringBuilder.toString();
 	}
 
+	public String getConfig(String key) {
+		String value = new ConfigProperties().get(key);
+		return value == null ? "" : value;
+	}
+
 	public String getGeoDatasetsHtml(double top, double left, double bottom, double right, String urlPrefix) {
 		StringBuilder sb = new StringBuilder();
 		sb.append("<!DOCTYPE html>");
