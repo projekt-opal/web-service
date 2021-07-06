@@ -48,6 +48,8 @@ import org.elasticsearch.search.sort.SortBuilders;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.PropertySource;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
 import com.google.gson.Gson;
@@ -60,6 +62,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Component
 @Slf4j
+@PropertySource("opal-webservices.properties")
 public class ElasticSearchProvider {
 
 	private final RestHighLevelClient restHighLevelClient;
@@ -75,6 +78,12 @@ public class ElasticSearchProvider {
 
 	@Value("${OPAL_ELASTICSEARCH_PORT}")
 	private String es_port;
+
+	/**
+	 * for {@link #getInfo()}
+	 */
+	@Autowired
+	Environment env;
 
 	@Autowired
 	public ElasticSearchProvider(RestHighLevelClient restHighLevelClient, ThemeConfiguration themeConfiguration) {
@@ -245,31 +254,38 @@ public class ElasticSearchProvider {
 		stringBuilder.append("<br />");
 		stringBuilder.append(System.lineSeparator());
 
-		ConfigProperties configProperties = new ConfigProperties();
+		try {
+			stringBuilder.append("SPARQL previous: ");
+			stringBuilder.append("<br />");
+			stringBuilder.append(env.getProperty(ConfigProperties.KEY_SPARQL_PREV_TITLE));
+			stringBuilder.append("<br />");
+			stringBuilder.append(env.getProperty(ConfigProperties.KEY_SPARQL_PREV));
+			stringBuilder.append("<br />");
+			stringBuilder.append("<br />");
+			stringBuilder.append(System.lineSeparator());
 
-		stringBuilder.append("SPARQL previous: ");
-		stringBuilder.append("<br />");
-		stringBuilder.append(configProperties.get(ConfigProperties.KEY_SPARQL_PREV_TITLE));
-		stringBuilder.append("<br />");
-		stringBuilder.append(configProperties.get(ConfigProperties.KEY_SPARQL_PREV));
-		stringBuilder.append("<br />");
-		stringBuilder.append("<br />");
-		stringBuilder.append(System.lineSeparator());
-
-		stringBuilder.append("SPARQL current: ");
-		stringBuilder.append("<br />");
-		stringBuilder.append(configProperties.get(ConfigProperties.KEY_SPARQL_CURRENT_TITLE));
-		stringBuilder.append("<br />");
-		stringBuilder.append(configProperties.get(ConfigProperties.KEY_SPARQL_CURRENT));
-		stringBuilder.append("<br />");
-		stringBuilder.append(System.lineSeparator());
+			stringBuilder.append("SPARQL current: ");
+			stringBuilder.append("<br />");
+			stringBuilder.append(env.getProperty(ConfigProperties.KEY_SPARQL_CURRENT_TITLE));
+			stringBuilder.append("<br />");
+			stringBuilder.append(env.getProperty(ConfigProperties.KEY_SPARQL_CURRENT));
+			stringBuilder.append("<br />");
+			stringBuilder.append(System.lineSeparator());
+		} catch (Exception e) {
+			stringBuilder.append("Could not load additional configuration properties");
+		}
 
 		return stringBuilder.toString();
 	}
 
 	public String getConfig(String key) {
-		String value = new ConfigProperties().get(key);
-		return value == null ? "" : value;
+		try {
+			// file may only be available in development mode
+			String value = new ConfigProperties().get(key);
+			return value == null ? "" : value;
+		} catch (Exception e) {
+			return "Could not load " + ConfigProperties.FILENAME;
+		}
 	}
 
 	public String getGeoDatasetsHtml(double top, double left, double bottom, double right, String urlPrefix) {

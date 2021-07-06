@@ -14,7 +14,7 @@ public class ConfigProperties {
 	public static final String KEY_GEO_URL_PREFIX = "geo.url.prefix";
 	public static final String KEY_GEO_REDIRECT = "geo.redirect";
 
-	public static final String FILENAME = "opal-webservices.properties";
+	public static final String FILENAME = "src/main/resources/" + "opal-webservices.properties";
 	private Properties properties;
 
 	public String get(String key) {
