@@ -279,8 +279,25 @@ public class ElasticSearchProvider {
 	}
 
 	public String getConfig(String key) {
+
+		// Handle keys of properties file
+		if (key == ConfigProperties.KEY_SPARQL_PREV
+
+				|| key == ConfigProperties.KEY_SPARQL_PREV_TITLE
+
+				|| key == ConfigProperties.KEY_SPARQL_CURRENT
+
+				|| key == ConfigProperties.KEY_SPARQL_CURRENT_TITLE
+
+				|| key == ConfigProperties.KEY_GEO_URL_PREFIX
+
+				|| key == ConfigProperties.KEY_GEO_REDIRECT) {
+
+			return env.getProperty(key);
+		}
+
+		// file may only be available in development mode
 		try {
-			// file may only be available in development mode
 			String value = new ConfigProperties().get(key);
 			return value == null ? "" : value;
 		} catch (Exception e) {
