@@ -20,6 +20,7 @@ import org.dice_research.opal.webservice.model.entity.dto.ValueDTO;
 import org.dice_research.opal.webservice.model.mapper.JsonObjectToDataSetMapper;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.client.Node;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.index.analysis.AnalysisRegistry;
@@ -232,16 +233,18 @@ public class ElasticSearchProvider {
 	public String getInfo() {
 		StringBuilder stringBuilder = new StringBuilder();
 
+		// Environment (ES)
+
 		stringBuilder.append("Elasticsearch: ");
 		stringBuilder.append("<br />");
 		stringBuilder.append(System.lineSeparator());
 
-		stringBuilder.append("URL: ");
+		stringBuilder.append("URL:   ");
 		stringBuilder.append(es_url);
 		stringBuilder.append("<br />");
 		stringBuilder.append(System.lineSeparator());
 
-		stringBuilder.append("Port: ");
+		stringBuilder.append("Port:  ");
 		stringBuilder.append(es_port);
 		stringBuilder.append("<br />");
 		stringBuilder.append(System.lineSeparator());
@@ -254,6 +257,7 @@ public class ElasticSearchProvider {
 		stringBuilder.append("<br />");
 		stringBuilder.append(System.lineSeparator());
 
+		// Properties (triplestore)
 		try {
 			stringBuilder.append("SPARQL previous: ");
 			stringBuilder.append("<br />");
@@ -261,21 +265,56 @@ public class ElasticSearchProvider {
 			stringBuilder.append("<br />");
 			stringBuilder.append(env.getProperty(ConfigProperties.KEY_SPARQL_PREV));
 			stringBuilder.append("<br />");
+			stringBuilder.append(System.lineSeparator());
 			stringBuilder.append("<br />");
 			stringBuilder.append(System.lineSeparator());
 
-			stringBuilder.append("SPARQL current: ");
+			stringBuilder.append("SPARQL current:  ");
 			stringBuilder.append("<br />");
 			stringBuilder.append(env.getProperty(ConfigProperties.KEY_SPARQL_CURRENT_TITLE));
 			stringBuilder.append("<br />");
 			stringBuilder.append(env.getProperty(ConfigProperties.KEY_SPARQL_CURRENT));
 			stringBuilder.append("<br />");
 			stringBuilder.append(System.lineSeparator());
+			stringBuilder.append("<br />");
+			stringBuilder.append(System.lineSeparator());
+
+			stringBuilder.append("Geo: ");
+			stringBuilder.append("<br />");
+			stringBuilder.append(System.lineSeparator());
+			stringBuilder.append(env.getProperty(ConfigProperties.KEY_GEO_REDIRECT));
+			stringBuilder.append("<br />");
+			stringBuilder.append(System.lineSeparator());
+			stringBuilder.append(env.getProperty(ConfigProperties.KEY_GEO_URL_PREFIX));
+			stringBuilder.append("<br />");
+			stringBuilder.append(System.lineSeparator());
+			stringBuilder.append("<br />");
+			stringBuilder.append(System.lineSeparator());
 		} catch (Exception e) {
 			stringBuilder.append("Could not load additional configuration properties");
 		}
 
-		return stringBuilder.toString();
+		// ES client
+		try {
+			stringBuilder.append("Elasticsearch nodes: ");
+			stringBuilder.append("<br />");
+			stringBuilder.append(System.lineSeparator());
+			for (Node node : restHighLevelClient.getLowLevelClient().getNodes()) {
+				stringBuilder.append(node.toString());
+				stringBuilder.append(System.lineSeparator());
+			}
+			stringBuilder.append(System.lineSeparator());
+		} catch (Exception e) {
+			stringBuilder.append("Could not get node data");
+		}
+
+		String infoString = stringBuilder.toString();
+
+		// Print for dev log
+		System.out.println(infoString.replaceAll("<br />", " "));
+
+		// Return for web
+		return infoString;
 	}
 
 	public String getConfig(String key) {
