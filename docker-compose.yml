@@ -10,4 +10,4 @@ services:
       - ES_INDEX=${ES_INDEX}
       - OPAL_ELASTICSEARCH_URL=${OPAL_ELASTICSEARCH_URL}
       - OPAL_ELASTICSEARCH_PORT=${OPAL_ELASTICSEARCH_PORT}
-
+    network_mode: "host"
