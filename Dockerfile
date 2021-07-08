@@ -2,6 +2,7 @@ FROM maven:3.6.3-jdk-8 AS builder
 RUN mkdir webservice
 WORKDIR webservice
 COPY . .
+RUN mvn dependency:resolve
 RUN mvn clean package -Dmaven.test.skip=true \
     && mv target/webservice-*.jar /webservice.jar
 
