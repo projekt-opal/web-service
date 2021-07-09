@@ -9,23 +9,27 @@ import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFParser;
 import org.apache.jena.riot.system.StreamRDFBase;
 import org.apache.jena.sparql.core.Quad;
-import org.dice_research.opal.webservice.config.ConfigProperties;
+import org.dice_research.opal.webservice.config.EnvVars;
 import org.dice_research.opal.webservice.fetcher.SparqlFetcher;
 import org.dice_research.opal.webservice.model.entity.dto.ChangesDTO;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
 @Component
 public class SparqlQueryService {
 
-	private ConfigProperties configProperties = new ConfigProperties();
-
 	@Autowired
 	private SparqlFetcher fetcher;
 
+	@Autowired
+	Environment env;
+
 	public boolean hasChanges(String uri) {
-		Set<Triple> previousTriples = getTriplesFromQuery(configProperties.get(ConfigProperties.KEY_SPARQL_PREV), uri);
-		Set<Triple> currentTriples = getTriplesFromQuery(configProperties.get(ConfigProperties.KEY_SPARQL_CURRENT),
+
+		Set<Triple> previousTriples = getTriplesFromQuery(env.getProperty(EnvVars.SPARQL_ENDPOINT_PREVIOUS.toString()),
+				uri);
+		Set<Triple> currentTriples = getTriplesFromQuery(env.getProperty(EnvVars.SPARQL_ENDPOINT_LATEST.toString()),
 				uri);
 
 		for (Triple t : currentTriples)
@@ -55,14 +59,14 @@ public class SparqlQueryService {
 		Set<String> removedTriples = new HashSet<String>();
 		Set<String> addedTriples = new HashSet<String>();
 
-		for (Triple t : getTriplesFromQuery(configProperties.get(ConfigProperties.KEY_SPARQL_PREV), uri)) {
+		for (Triple t : getTriplesFromQuery(env.getProperty(EnvVars.SPARQL_ENDPOINT_PREVIOUS.toString()), uri)) {
 			if (t.getSubject().isBlank() || t.getObject().isBlank())
 				continue;
 
 			previousTriples.add(t.toString());
 		}
 
-		for (Triple t : getTriplesFromQuery(configProperties.get(ConfigProperties.KEY_SPARQL_CURRENT), uri)) {
+		for (Triple t : getTriplesFromQuery(env.getProperty(EnvVars.SPARQL_ENDPOINT_LATEST.toString()), uri)) {
 			if (t.getSubject().isBlank() || t.getObject().isBlank())
 				continue;
 

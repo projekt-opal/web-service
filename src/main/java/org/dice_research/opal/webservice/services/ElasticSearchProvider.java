@@ -8,7 +8,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.apache.lucene.search.join.ScoreMode;
-import org.dice_research.opal.webservice.config.ConfigProperties;
+import org.dice_research.opal.webservice.config.EnvVars;
 import org.dice_research.opal.webservice.config.ThemeConfiguration;
 import org.dice_research.opal.webservice.model.entity.DataSet;
 import org.dice_research.opal.webservice.model.entity.dto.CounterDTO;
@@ -49,7 +49,6 @@ import org.elasticsearch.search.sort.SortBuilders;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.PropertySource;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
@@ -63,7 +62,6 @@ import lombok.extern.slf4j.Slf4j;
 
 @Component
 @Slf4j
-@PropertySource("opal-webservices.properties")
 public class ElasticSearchProvider {
 
 	private final RestHighLevelClient restHighLevelClient;
@@ -233,68 +231,42 @@ public class ElasticSearchProvider {
 	public String getInfo() {
 		StringBuilder stringBuilder = new StringBuilder();
 
-		// Environment (ES)
+//		// Environment (ES)
+//
+//		stringBuilder.append("Elasticsearch: ");
+//		stringBuilder.append("<br />");
+//		stringBuilder.append(System.lineSeparator());
+//
+//		stringBuilder.append("URL:   ");
+//		stringBuilder.append(es_url);
+//		stringBuilder.append("<br />");
+//		stringBuilder.append(System.lineSeparator());
+//
+//		stringBuilder.append("Port:  ");
+//		stringBuilder.append(es_port);
+//		stringBuilder.append("<br />");
+//		stringBuilder.append(System.lineSeparator());
+//
+//		stringBuilder.append("Index: ");
+//		stringBuilder.append(es_index);
+//		stringBuilder.append("<br />");
+//		stringBuilder.append(System.lineSeparator());
+//
+//		stringBuilder.append("<br />");
+//		stringBuilder.append(System.lineSeparator());
 
-		stringBuilder.append("Elasticsearch: ");
-		stringBuilder.append("<br />");
-		stringBuilder.append(System.lineSeparator());
+		// Formerly properties, now environment variables
 
-		stringBuilder.append("URL:   ");
-		stringBuilder.append(es_url);
-		stringBuilder.append("<br />");
-		stringBuilder.append(System.lineSeparator());
-
-		stringBuilder.append("Port:  ");
-		stringBuilder.append(es_port);
-		stringBuilder.append("<br />");
-		stringBuilder.append(System.lineSeparator());
-
-		stringBuilder.append("Index: ");
-		stringBuilder.append(es_index);
-		stringBuilder.append("<br />");
-		stringBuilder.append(System.lineSeparator());
-
-		stringBuilder.append("<br />");
-		stringBuilder.append(System.lineSeparator());
-
-		// Properties (triplestore)
-		try {
-			stringBuilder.append("SPARQL previous: ");
-			stringBuilder.append("<br />");
-			stringBuilder.append(env.getProperty(ConfigProperties.KEY_SPARQL_PREV_TITLE));
-			stringBuilder.append("<br />");
-			stringBuilder.append(env.getProperty(ConfigProperties.KEY_SPARQL_PREV));
+		for (EnvVars key : EnvVars.values()) {
+			stringBuilder.append(key);
+			stringBuilder.append(": ");
+			stringBuilder.append(env.getProperty(key.toString()));
 			stringBuilder.append("<br />");
 			stringBuilder.append(System.lineSeparator());
-			stringBuilder.append("<br />");
-			stringBuilder.append(System.lineSeparator());
-
-			stringBuilder.append("SPARQL current:  ");
-			stringBuilder.append("<br />");
-			stringBuilder.append(env.getProperty(ConfigProperties.KEY_SPARQL_CURRENT_TITLE));
-			stringBuilder.append("<br />");
-			stringBuilder.append(env.getProperty(ConfigProperties.KEY_SPARQL_CURRENT));
-			stringBuilder.append("<br />");
-			stringBuilder.append(System.lineSeparator());
-			stringBuilder.append("<br />");
-			stringBuilder.append(System.lineSeparator());
-
-			stringBuilder.append("Geo: ");
-			stringBuilder.append("<br />");
-			stringBuilder.append(System.lineSeparator());
-			stringBuilder.append(env.getProperty(ConfigProperties.KEY_GEO_REDIRECT));
-			stringBuilder.append("<br />");
-			stringBuilder.append(System.lineSeparator());
-			stringBuilder.append(env.getProperty(ConfigProperties.KEY_GEO_URL_PREFIX));
-			stringBuilder.append("<br />");
-			stringBuilder.append(System.lineSeparator());
-			stringBuilder.append("<br />");
-			stringBuilder.append(System.lineSeparator());
-		} catch (Exception e) {
-			stringBuilder.append("Could not load additional configuration properties");
 		}
 
 		// ES client
+
 		try {
 			stringBuilder.append("Elasticsearch nodes: ");
 			stringBuilder.append("<br />");
@@ -318,30 +290,7 @@ public class ElasticSearchProvider {
 	}
 
 	public String getConfig(String key) {
-
-		// Handle keys of properties file
-		if (key == ConfigProperties.KEY_SPARQL_PREV
-
-				|| key == ConfigProperties.KEY_SPARQL_PREV_TITLE
-
-				|| key == ConfigProperties.KEY_SPARQL_CURRENT
-
-				|| key == ConfigProperties.KEY_SPARQL_CURRENT_TITLE
-
-				|| key == ConfigProperties.KEY_GEO_URL_PREFIX
-
-				|| key == ConfigProperties.KEY_GEO_REDIRECT) {
-
-			return env.getProperty(key);
-		}
-
-		// file may only be available in development mode
-		try {
-			String value = new ConfigProperties().get(key);
-			return value == null ? "" : value;
-		} catch (Exception e) {
-			return "Could not load " + ConfigProperties.FILENAME;
-		}
+		return env.getProperty(key);
 	}
 
 	public String getGeoDatasetsHtml(double top, double left, double bottom, double right, String urlPrefix) {
