@@ -4,6 +4,39 @@ This component is part of the [demo](https://github.com/projekt-opal/demo) proje
 It requires [opaldata](https://github.com/projekt-opal/opaldata) to access data.
 It provides data for the [web-ui](https://github.com/projekt-opal/web-ui).
 
+# How to run
+
+To be able to run you must provide a *.env* file in the root folder of the project that is similar to
+
+```
+# Elasticsearch configuration
+OPAL_ELASTICSEARCH_URL=localhost
+OPAL_ELASTICSEARCH_PORT=9200
+ES_INDEX=opal
+
+# SPARQL endpoint for previously crawled dataset
+SPARQL_ENDPOINT_PREVIOUS=http://localhost:3030/2020-06/
+
+# SPARQL endpoint for latest crawled dataset
+SPARQL_ENDPOINT_LATEST=http://localhost:3030/2020-10/
+
+# Will be added as parameter 'urlPrefix' in GEO_REDIRECT URL
+GEO_URL_PREFIX=http://localhost:3000/view/datasetView?uri=
+
+# URL to redirect to when map bounding box was selected by user
+GEO_REDIRECT=http://localhost:8081/getGeoDatasetsHtml
+```
+
+Then, by running the command 
+
+```
+docker-compose up -d
+```
+
+you have the demo containers running and the demo is available on port 8081 (you can set any port that you want in the docker-compose.yml) of your server.
+
+Check the running Docker container by opening 
+http://localhost:8081/opalinfo
 
 ## Notes
 
